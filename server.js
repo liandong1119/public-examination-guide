@@ -7,11 +7,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import { CONFIG, validateConfig, printConfig } from './config/index.js';
-import { enhancedDB } from './database/enhanced-mysql.js';
 import db from './database/init.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __dirname = path.dirname(__filename); // 暂时未使用
 
 // 验证配置
 try {
@@ -32,7 +31,7 @@ let userData = {};
 
 // 文件上传配置
 const storage = multer.diskStorage({
-    destination: async function (req, file, cb) {
+    destination: async function (_req, _file, cb) {
         const uploadDir = 'docs/public/uploads';
         try {
             await fs.mkdir(uploadDir, { recursive: true });
@@ -41,7 +40,7 @@ const storage = multer.diskStorage({
             cb(error);
         }
     },
-    filename: function (req, file, cb) {
+    filename: function (_req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
@@ -52,7 +51,7 @@ const upload = multer({
     limits: {
         fileSize: 10 * 1024 * 1024 // 10MB限制
     },
-    fileFilter: function (req, file, cb) {
+    fileFilter: function (_req, file, cb) {
         // 允许的文件类型
         const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|md/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -185,7 +184,7 @@ async function scanExistingDocs() {
 // 📝 内容管理API
 
 // 获取所有内容
-app.get('/api/content', async (req, res) => {
+app.get('/api/content', async (_req, res) => {
     try {
         // 暂时使用模拟数据
         const contentArray = contentData || [];
@@ -391,7 +390,7 @@ app.get('/api/search', (req, res) => {
 });
 
 // 📊 获取统计数据
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats', async (_req, res) => {
     try {
         const stats = await db.getStats();
 
@@ -484,7 +483,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 });
 
 // 获取目录结构API
-app.get('/api/structure', async (req, res) => {
+app.get('/api/structure', async (_req, res) => {
     try {
         const structure = await getDirectoryStructure('docs');
         res.json({ success: true, data: structure });
@@ -570,7 +569,7 @@ app.post('/api/markdown', async (req, res) => {
 });
 
 // 📁 文件管理API
-app.get('/api/files/tree', (req, res) => {
+app.get('/api/files/tree', (_req, res) => {
     try {
         const docsPath = path.join(process.cwd(), 'docs');
         const tree = buildFileTree(docsPath);
@@ -886,7 +885,7 @@ app.post('/api/files/copy', (req, res) => {
 // 📚 VitePress文档管理API
 
 // 获取VitePress文档列表
-app.get('/api/vitepress/documents', async (req, res) => {
+app.get('/api/vitepress/documents', async (_req, res) => {
     try {
         const documents = [];
 
@@ -1163,7 +1162,7 @@ app.delete('/api/vitepress/documents', async (req, res) => {
 });
 
 // 获取VitePress目录树
-app.get('/api/vitepress/tree', async (req, res) => {
+app.get('/api/vitepress/tree', async (_req, res) => {
     try {
         const structure = await getDirectoryStructure('docs');
         res.json({
@@ -1181,7 +1180,7 @@ app.get('/api/vitepress/tree', async (req, res) => {
 });
 
 // 获取VitePress配置
-app.get('/api/vitepress/config', (req, res) => {
+app.get('/api/vitepress/config', (_req, res) => {
     try {
         // 返回模拟的VitePress配置
         const config = {
@@ -1221,7 +1220,7 @@ app.get('/api/vitepress/config', (req, res) => {
 });
 
 // 更新VitePress配置
-app.put('/api/vitepress/config', (req, res) => {
+app.put('/api/vitepress/config', (_req, res) => {
     try {
         // 这里可以实现配置更新逻辑
         res.json({
@@ -1237,7 +1236,7 @@ app.put('/api/vitepress/config', (req, res) => {
 });
 
 // 构建VitePress站点
-app.post('/api/vitepress/build', (req, res) => {
+app.post('/api/vitepress/build', (_req, res) => {
     try {
         // 这里可以实现构建逻辑
         res.json({
@@ -1253,7 +1252,7 @@ app.post('/api/vitepress/build', (req, res) => {
 });
 
 // 预览VitePress站点
-app.post('/api/vitepress/preview', (req, res) => {
+app.post('/api/vitepress/preview', (_req, res) => {
     try {
         res.json({
             success: true,
@@ -1425,7 +1424,8 @@ async function createMarkdownFile(contentItem) {
     }
 }
 
-// 更新Markdown文件
+// 更新Markdown文件 (暂时未使用)
+/*
 async function updateMarkdownFile(oldItem, newItem) {
     try {
         // 如果标题或分类改变，可能需要移动文件
@@ -1447,8 +1447,10 @@ async function updateMarkdownFile(oldItem, newItem) {
         console.error('更新Markdown文件失败:', error);
     }
 }
+*/
 
-// 删除Markdown文件
+// 删除Markdown文件 (暂时未使用)
+/*
 async function deleteMarkdownFile(contentItem) {
     try {
         const filePath = getMarkdownPath(contentItem);
@@ -1458,6 +1460,7 @@ async function deleteMarkdownFile(contentItem) {
         console.warn('删除Markdown文件失败:', error);
     }
 }
+*/
 
 // 辅助函数
 function getCategoryPath(category) {
@@ -1509,7 +1512,7 @@ async function saveContentData() {
 }
 
 // 错误处理中间件
-app.use((error, req, res, next) => {
+app.use((error, _req, res, _next) => {
     console.error('服务器错误:', error);
     res.status(500).json({
         success: false,
@@ -1518,7 +1521,7 @@ app.use((error, req, res, next) => {
 });
 
 // 404处理
-app.use((req, res) => {
+app.use((_req, res) => {
     res.status(404).json({
         success: false,
         error: '接口不存在'
