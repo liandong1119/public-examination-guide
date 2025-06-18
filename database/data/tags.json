@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "数量关系",
+    "category": "xingce",
+    "count": 0
+  },
+  {
+    "id": 2,
+    "name": "言语理解",
+    "category": "xingce",
+    "count": 0
+  },
+  {
+    "id": 3,
+    "name": "判断推理",
+    "category": "xingce",
+    "count": 0
+  },
+  {
+    "id": 4,
+    "name": "资料分析",
+    "category": "xingce",
+    "count": 0
+  },
+  {
+    "id": 5,
+    "name": "常识判断",
+    "category": "xingce",
+    "count": 0
+  },
+  {
+    "id": 6,
+    "name": "归纳概括",
+    "category": "shenlun",
+    "count": 0
+  },
+  {
+    "id": 7,
+    "name": "综合分析",
+    "category": "shenlun",
+    "count": 0
+  },
+  {
+    "id": 8,
+    "name": "提出对策",
+    "category": "shenlun",
+    "count": 0
+  },
+  {
+    "id": 9,
+    "name": "应用文写作",
+    "category": "shenlun",
+    "count": 0
+  },
+  {
+    "id": 10,
+    "name": "文章写作",
+    "category": "shenlun",
+    "count": 0
+  }
+]

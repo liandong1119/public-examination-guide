@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考公考编知识库 - 后台管理</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <style>
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .admin-container { min-height: 100vh; background: #f5f5f5; }
+        .header { background: #409eff; color: white; padding: 0 20px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+        .sidebar { width: 200px; background: white; min-height: calc(100vh - 60px); box-shadow: 2px 0 6px rgba(0,0,0,0.1); }
+        .main-content { flex: 1; padding: 20px; }
+        .layout { display: flex; }
+        .stats-card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .feature-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+        .ai-chat { background: white; border-radius: 12px; padding: 20px; height: 400px; display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 18px; max-width: 80%; }
+        .message.user { background: #409eff; color: white; margin-left: auto; }
+        .message.ai { background: #f0f0f0; color: #333; }
+        .analytics-chart { background: white; border-radius: 8px; padding: 20px; height: 300px; }
+        .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 400px; }
+        .login-title { text-align: center; margin-bottom: 30px; color: #333; }
+        .login-form { width: 100%; }
+        .form-item { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; color: #666; font-weight: 500; }
+        .form-input { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .form-input:focus { outline: none; border-color: #409eff; }
+        .login-btn { width: 100%; padding: 12px; background: #409eff; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .login-btn:hover { background: #337ecc; }
+        .demo-info { margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录页面 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <h2 class="login-title">🎓 后台管理登录</h2>
+                <form class="login-form" @submit.prevent="login">
+                    <div class="form-item">
+                        <label class="form-label">用户名</label>
+                        <input 
+                            type="text" 
+                            v-model="loginForm.username" 
+                            class="form-input" 
+                            placeholder="请输入用户名"
+                            required
+                        >
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">密码</label>
+                        <input 
+                            type="password" 
+                            v-model="loginForm.password" 
+                            class="form-input" 
+                            placeholder="请输入密码"
+                            required
+                        >
+                    </div>
+                    <button type="submit" class="login-btn">登录</button>
+                </form>
+                <div class="demo-info">
+                    <strong>演示账号：</strong><br>
+                    用户名：admin<br>
+                    密码：123456
+                </div>
+            </div>
+        </div>
+
+        <!-- 管理后台 -->
+        <div v-if="isLoggedIn" class="admin-container">
+            <!-- 顶部导航 -->
+            <div class="header">
+                <h2>🎓 考公考编知识库管理后台</h2>
+                <div>
+                    <button @click="showAIAssistant = !showAIAssistant" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                        🤖 AI助手
+                    </button>
+                    <button @click="logout" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                        退出登录
+                    </button>
+                </div>
+            </div>
+
+            <div class="layout">
+                <!-- 侧边栏 -->
+                <div class="sidebar">
+                    <div style="padding: 20px 0;">
+                        <div 
+                            v-for="menu in menuItems" 
+                            :key="menu.key"
+                            :style="{
+                                padding: '12px 20px',
+                                cursor: 'pointer',
+                                background: activeMenu === menu.key ? '#409eff' : 'transparent',
+                                color: activeMenu === menu.key ? 'white' : '#333',
+                                borderLeft: activeMenu === menu.key ? '3px solid #409eff' : 'none'
+                            }"
+                            @click="activeMenu = menu.key"
+                        >
+                            {{ menu.icon }} {{ menu.label }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 主内容区 -->
+                <div class="main-content">
+                    <!-- 📊 数据概览 -->
+                    <div v-if="activeMenu === 'dashboard'">
+                        <h3>📊 数据概览</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                            <div class="stats-card">
+                                <h4>📝 内容总数</h4>
+                                <h2 style="color: #409eff; margin: 10px 0;">{{ stats.totalContent }}</h2>
+                                <p style="color: #666; margin: 0;">已发布: {{ stats.publishedContent }} | 草稿: {{ stats.draftContent }}</p>
+                            </div>
+                            <div class="stats-card">
+                                <h4>👀 访问统计</h4>
+                                <h2 style="color: #67c23a; margin: 10px 0;">{{ stats.totalViews }}</h2>
+                                <p style="color: #666; margin: 0;">今日: {{ stats.todayViews }} | 本周: {{ stats.weekViews }}</p>
+                            </div>
+                            <div class="stats-card">
+                                <h4>📁 内容分类</h4>
+                                <h2 style="color: #e6a23c; margin: 10px 0;">{{ stats.categories.length }}</h2>
+                                <p style="color: #666; margin: 0;">热门: {{ stats.categories[0]?.name || '暂无' }}</p>
+                            </div>
+                            <div class="stats-card">
+                                <h4>🔍 热门关键词</h4>
+                                <h2 style="color: #f56c6c; margin: 10px 0;">{{ stats.popularKeywords.length }}</h2>
+                                <p style="color: #666; margin: 0;">{{ stats.popularKeywords.slice(0, 2).join(', ') || '暂无数据' }}</p>
+                            </div>
+                        </div>
+
+                        <!-- 📈 内容分类统计 -->
+                        <div class="stats-card">
+                            <h4>📁 内容分类统计</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                                <div v-for="category in stats.categories" :key="category.name" style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                                    <h3 style="margin: 0; color: #409eff;">{{ category.count }}</h3>
+                                    <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">{{ category.name }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ⚡ 快速操作 -->
+                        <div class="stats-card">
+                            <h4>⚡ 快速操作</h4>
+                            <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                                <button @click="activeMenu = 'content'" style="padding: 10px 20px; background: #409eff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                    📝 新增内容
+                                </button>
+                                <button @click="activeMenu = 'categories'" style="padding: 10px 20px; background: #67c23a; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                    📁 分类管理
+                                </button>
+                                <button @click="activeMenu = 'analytics'" style="padding: 10px 20px; background: #e6a23c; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                    📊 访问分析
+                                </button>
+                                <button @click="activeMenu = 'settings'" style="padding: 10px 20px; background: #909399; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                    ⚙️ 系统设置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 内容管理 -->
+                    <div v-if="activeMenu === 'content'">
+                        <h3>📝 内容管理</h3>
+                        <button @click="showContentDialog = true" style="padding: 10px 20px; background: #409eff; color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 20px;">
+                            ➕ 新增内容
+                        </button>
+                        
+                        <div class="stats-card">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">标题</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">分类</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">状态</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">浏览量</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">更新时间</th>
+                                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in contentList" :key="item.id">
+                                        <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ item.title }}</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ item.category }}</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                                            <span :style="{
+                                                padding: '4px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
+                                                background: item.status === '已发布' ? '#f0f9ff' : '#fff7e6',
+                                                color: item.status === '已发布' ? '#409eff' : '#e6a23c'
+                                            }">
+                                                {{ item.status }}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ item.views }}</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #eee;">{{ item.updateTime }}</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                                            <button @click="editContent(item)" style="padding: 4px 8px; background: #409eff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px;">
+                                                编辑
+                                            </button>
+                                            <button @click="deleteContent(item)" style="padding: 4px 8px; background: #f56c6c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                                删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 📈 访问分析 -->
+                    <div v-if="activeMenu === 'analytics'">
+                        <h3>📈 访问分析</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                            <div class="stats-card">
+                                <h4>📊 访问统计</h4>
+                                <div style="margin: 15px 0;">
+                                    <p>总访问量: <strong>{{ stats.totalViews }}</strong></p>
+                                    <p>今日访问: <strong>{{ stats.todayViews }}</strong></p>
+                                    <p>本周访问: <strong>{{ stats.weekViews }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="stats-card">
+                                <h4>🔥 热门内容</h4>
+                                <div style="margin: 15px 0;">
+                                    <div v-for="item in contentList.slice(0, 3)" :key="item.id" style="margin-bottom: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px;">
+                                        <p style="margin: 0; font-size: 14px; font-weight: 500;">{{ item.title }}</p>
+                                        <p style="margin: 0; font-size: 12px; color: #666;">浏览量: {{ item.views }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats-card">
+                            <h4>📈 访问趋势</h4>
+                            <div style="height: 200px; display: flex; align-items: center; justify-content: center; color: #999; background: #f8f9fa; border-radius: 8px;">
+                                📊 访问趋势图表（可接入真实统计工具）
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 📁 分类管理 -->
+                    <div v-if="activeMenu === 'categories'">
+                        <h3>📁 分类管理</h3>
+                        <div class="stats-card">
+                            <h4>内容分类</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                                <div v-for="category in stats.categories" :key="category.name" style="padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                                    <h3 style="margin: 0 0 10px 0; color: #409eff;">{{ category.name }}</h3>
+                                    <p style="margin: 0; color: #666;">{{ category.count }} 篇内容</p>
+                                    <button style="margin-top: 10px; padding: 5px 10px; background: #409eff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                        管理
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ⚙️ 系统设置 -->
+                    <div v-if="activeMenu === 'settings'">
+                        <h3>⚙️ 系统设置</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                            <div class="stats-card">
+                                <h4>🔧 基本设置</h4>
+                                <div style="margin: 15px 0;">
+                                    <label style="display: block; margin-bottom: 8px;">网站标题：</label>
+                                    <input value="朝闻阁 - 考公考编知识库" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div style="margin: 15px 0;">
+                                    <label style="display: block; margin-bottom: 8px;">网站描述：</label>
+                                    <textarea rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">专业的公务员考试知识分享平台</textarea>
+                                </div>
+                            </div>
+                            <div class="stats-card">
+                                <h4>📊 数据管理</h4>
+                                <div style="margin: 15px 0;">
+                                    <button style="padding: 10px 20px; background: #67c23a; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                                        📥 导出数据
+                                    </button>
+                                    <button style="padding: 10px 20px; background: #e6a23c; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                        🔄 备份数据
+                                    </button>
+                                </div>
+                                <div style="margin: 15px 0;">
+                                    <p style="font-size: 14px; color: #666;">数据库状态: <span style="color: #67c23a;">正常</span></p>
+                                    <p style="font-size: 14px; color: #666;">最后备份: 2024-06-17 10:30</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI助手悬浮窗 -->
+            <div v-if="showAIAssistant" style="position: fixed; top: 80px; right: 20px; width: 400px; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1000;">
+                <div style="background: #409eff; color: white; padding: 15px 20px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0;">🤖 AI管理助手</h4>
+                    <button @click="showAIAssistant = false" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer;">✕</button>
+                </div>
+                <div class="ai-chat">
+                    <div class="chat-messages" ref="chatMessages">
+                        <div v-for="msg in chatMessages" :key="msg.id" :class="['message', msg.type]">
+                            {{ msg.content }}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input 
+                            v-model="chatInput" 
+                            placeholder="询问AI助手..." 
+                            @keyup.enter="sendMessage"
+                            style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;"
+                        >
+                        <button @click="sendMessage" style="padding: 10px 15px; background: #409eff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            发送
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 内容编辑对话框 -->
+            <div v-if="showContentDialog" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1001;">
+                <div style="background: white; border-radius: 12px; padding: 30px; width: 80%; max-width: 800px; max-height: 80vh; overflow-y: auto;">
+                    <h3>内容编辑</h3>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">标题：</label>
+                        <input v-model="currentContent.title" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">分类：</label>
+                        <select v-model="currentContent.category" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                            <option value="civil-service">公务员考试</option>
+                            <option value="public-institution">事业单位</option>
+                            <option value="teacher">教师编制</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">内容：</label>
+                        <textarea 
+                            v-model="currentContent.content" 
+                            rows="10" 
+                            placeholder="支持Markdown格式"
+                            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;"
+                        ></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button @click="showContentDialog = false" style="padding: 10px 20px; background: #ccc; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            取消
+                        </button>
+                        <button @click="saveContent" style="padding: 10px 20px; background: #409eff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    apiBase: 'http://localhost:3001/api',
+                    isLoggedIn: false,
+                    loginForm: {
+                        username: '',
+                        password: ''
+                    },
+                    activeMenu: 'dashboard',
+                    showAIAssistant: false,
+                    showContentDialog: false,
+                    chatInput: '',
+                    chatMessages: [
+                        { id: 1, type: 'ai', content: '您好！我是AI管理助手，有什么可以帮您的吗？' }
+                    ],
+                    menuItems: [
+                        { key: 'dashboard', label: '数据概览', icon: '📊' },
+                        { key: 'content', label: '内容管理', icon: '📝' },
+                        { key: 'analytics', label: '访问分析', icon: '📈' },
+                        { key: 'categories', label: '分类管理', icon: '📁' },
+                        { key: 'settings', label: '系统设置', icon: '⚙️' }
+                    ],
+                    stats: {
+                        totalContent: 0,
+                        publishedContent: 0,
+                        draftContent: 0,
+                        totalViews: 0,
+                        todayViews: 0,
+                        weekViews: 0,
+                        categories: [],
+                        popularKeywords: []
+                    },
+                    aiConfig: {
+                        style: 'professional'
+                    },
+                    aiStats: {
+                        todayQuestions: 156,
+                        satisfaction: 94,
+                        topCategory: '申论写作'
+                    },
+                    contentList: [
+                        { id: 1, title: '2024年国考行测真题解析', category: '公务员考试', status: '已发布', views: 1520, updateTime: '2024-06-16 10:30' },
+                        { id: 2, title: '申论热点：数字经济发展', category: '公务员考试', status: '草稿', views: 0, updateTime: '2024-06-16 09:15' },
+                        { id: 3, title: '教育心理学重点知识梳理', category: '教师编制', status: '已发布', views: 890, updateTime: '2024-06-15 16:20' }
+                    ],
+                    currentContent: {
+                        title: '',
+                        category: '',
+                        content: ''
+                    }
+                }
+            },
+            methods: {
+                // API调用方法
+                async apiCall(endpoint, options = {}) {
+                    try {
+                        const response = await fetch(`${this.apiBase}${endpoint}`, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...options.headers
+                            },
+                            ...options
+                        });
+                        const data = await response.json();
+                        return data;
+                    } catch (error) {
+                        console.error('API调用失败:', error);
+                        return { success: false, error: error.message };
+                    }
+                },
+
+                login() {
+                    // 简单的演示登录
+                    if (this.loginForm.username === 'admin' && this.loginForm.password === '123456') {
+                        this.isLoggedIn = true;
+                        localStorage.setItem('adminLoggedIn', 'true');
+                        this.loadData(); // 登录后加载数据
+                    } else {
+                        alert('用户名或密码错误！');
+                    }
+                },
+                logout() {
+                    this.isLoggedIn = false;
+                    localStorage.removeItem('adminLoggedIn');
+                },
+
+                // 📊 加载数据
+                async loadData() {
+                    try {
+                        // 加载统计数据
+                        const statsResult = await this.apiCall('/stats');
+                        if (statsResult.success) {
+                            const data = statsResult.data;
+                            this.stats = {
+                                totalContent: data.content.total,
+                                publishedContent: data.content.published,
+                                draftContent: data.content.draft,
+                                totalViews: data.visits.total,
+                                todayViews: data.visits.today,
+                                weekViews: data.visits.thisWeek,
+                                categories: data.categories || [],
+                                popularKeywords: data.popular?.searchKeywords || []
+                            };
+                        }
+
+                        // 加载内容列表
+                        const contentResult = await this.apiCall('/content');
+                        if (contentResult.success) {
+                            this.contentList = contentResult.data.map(item => ({
+                                id: item.id,
+                                title: item.title,
+                                category: item.category,
+                                status: item.status,
+                                views: item.views || 0,
+                                updateTime: item.updateTime || item.updatedAt,
+                                createdAt: item.createdAt
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('加载数据失败:', error);
+                        alert('数据加载失败，请检查服务器连接');
+                    }
+                },
+                sendMessage() {
+                    if (!this.chatInput.trim()) return;
+                    
+                    this.chatMessages.push({
+                        id: Date.now(),
+                        type: 'user',
+                        content: this.chatInput
+                    });
+                    
+                    // 模拟AI回复
+                    setTimeout(() => {
+                        const responses = [
+                            '我来帮您分析一下用户学习数据...',
+                            '建议您关注一下申论模块的用户反馈',
+                            '检测到有用户在数量关系部分遇到困难，建议增加相关练习',
+                            '今日AI问答系统运行正常，用户满意度较高'
+                        ];
+                        this.chatMessages.push({
+                            id: Date.now(),
+                            type: 'ai',
+                            content: responses[Math.floor(Math.random() * responses.length)]
+                        });
+                    }, 1000);
+                    
+                    this.chatInput = '';
+                },
+                editContent(row) {
+                    this.currentContent = { ...row };
+                    this.showContentDialog = true;
+                },
+
+                async deleteContent(row) {
+                    if (confirm('确定要删除这篇内容吗？')) {
+                        const result = await this.apiCall(`/content/${row.id}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (result.success) {
+                            const index = this.contentList.findIndex(item => item.id === row.id);
+                            if (index > -1) {
+                                this.contentList.splice(index, 1);
+                            }
+                            alert('删除成功');
+                        } else {
+                            alert('删除失败: ' + result.error);
+                        }
+                    }
+                },
+
+                async saveContent() {
+                    try {
+                        let result;
+
+                        if (this.currentContent.id) {
+                            // 更新现有内容
+                            result = await this.apiCall(`/content/${this.currentContent.id}`, {
+                                method: 'PUT',
+                                body: JSON.stringify(this.currentContent)
+                            });
+                        } else {
+                            // 新增内容
+                            result = await this.apiCall('/content', {
+                                method: 'POST',
+                                body: JSON.stringify(this.currentContent)
+                            });
+                        }
+
+                        if (result.success) {
+                            alert('保存成功');
+                            this.showContentDialog = false;
+                            this.currentContent = { title: '', category: '', content: '' };
+                            await this.loadData(); // 重新加载数据
+                        } else {
+                            alert('保存失败: ' + result.error);
+                        }
+                    } catch (error) {
+                        alert('保存失败: ' + error.message);
+                    }
+                }
+            },
+            async mounted() {
+                // 检查是否已登录
+                if (localStorage.getItem('adminLoggedIn') === 'true') {
+                    this.isLoggedIn = true;
+                    await this.loadData(); // 加载数据
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

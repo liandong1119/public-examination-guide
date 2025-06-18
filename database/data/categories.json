@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "name": "行测",
+    "slug": "xingce",
+    "description": "行政职业能力测验",
+    "count": 0
+  },
+  {
+    "id": 2,
+    "name": "申论",
+    "slug": "shenlun",
+    "description": "申论写作与分析",
+    "count": 0
+  },
+  {
+    "id": 3,
+    "name": "面试",
+    "slug": "mianshi",
+    "description": "结构化面试技巧",
+    "count": 0
+  },
+  {
+    "id": 4,
+    "name": "时政",
+    "slug": "shizheng",
+    "description": "时事政治热点",
+    "count": 0
+  },
+  {
+    "id": 5,
+    "name": "公基",
+    "slug": "gongji",
+    "description": "公共基础知识",
+    "count": 0
+  }
+]

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-item { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 API连接测试</h1>
+    
+    <div class="test-item">
+        <h3>1. 测试API连接</h3>
+        <button onclick="testConnection()">测试连接</button>
+        <div id="connection-result"></div>
+    </div>
+
+    <div class="test-item">
+        <h3>2. 获取统计数据</h3>
+        <button onclick="testStats()">获取统计</button>
+        <div id="stats-result"></div>
+    </div>
+
+    <div class="test-item">
+        <h3>3. 获取内容列表</h3>
+        <button onclick="testContent()">获取内容</button>
+        <div id="content-result"></div>
+    </div>
+
+    <div class="test-item">
+        <h3>4. 创建测试内容</h3>
+        <button onclick="testCreateContent()">创建内容</button>
+        <div id="create-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                const data = await response.json();
+                return { success: true, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            if (result.success) {
+                element.innerHTML = `
+                    <div class="success">
+                        <h4>✅ 成功</h4>
+                        <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                    </div>
+                `;
+            } else {
+                element.innerHTML = `
+                    <div class="error">
+                        <h4>❌ 失败</h4>
+                        <p>错误: ${result.error}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testConnection() {
+            console.log('测试API连接...');
+            const result = await apiCall('/stats');
+            showResult('connection-result', result);
+        }
+
+        async function testStats() {
+            console.log('获取统计数据...');
+            const result = await apiCall('/stats');
+            showResult('stats-result', result);
+        }
+
+        async function testContent() {
+            console.log('获取内容列表...');
+            const result = await apiCall('/content');
+            showResult('content-result', result);
+        }
+
+        async function testCreateContent() {
+            console.log('创建测试内容...');
+            const testData = {
+                title: '测试内容 - ' + new Date().toLocaleString(),
+                category: '公务员考试',
+                content: '这是一个测试内容，用于验证API功能。',
+                status: '草稿'
+            };
+            
+            const result = await apiCall('/content', {
+                method: 'POST',
+                body: JSON.stringify(testData)
+            });
+            showResult('create-result', result);
+        }
+
+        // 页面加载时自动测试连接
+        window.onload = function() {
+            console.log('页面加载完成，开始测试API连接...');
+            testConnection();
+        };
+    </script>
+</body>
+</html>
