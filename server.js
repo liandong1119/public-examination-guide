@@ -67,8 +67,10 @@ const upload = multer({
 
 // 中间件
 app.use(cors({
-    origin: ['http://localhost:5173', `http://localhost:${PORT}`],
-    credentials: true
+    origin: true, // 允许所有来源
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept']
 }));
 app.use(express.json());
 
@@ -952,7 +954,10 @@ app.get('/api/vitepress/documents', async (_req, res) => {
 // 获取单个VitePress文档
 app.get('/api/vitepress/document', async (req, res) => {
     try {
+        console.log('=== API调用开始: /api/vitepress/document ===');
         const { path: docPath } = req.query;
+        console.log('请求的文档路径:', docPath);
+
         if (!docPath) {
             return res.status(400).json({
                 success: false,
@@ -960,35 +965,49 @@ app.get('/api/vitepress/document', async (req, res) => {
             });
         }
 
-        const fullPath = path.join('docs', docPath);
+        // 处理路径：如果已经包含 docs/ 前缀，就直接使用；否则添加前缀
+        let fullPath;
+        if (docPath.startsWith('docs/')) {
+            fullPath = docPath;
+        } else {
+            fullPath = path.join('docs', docPath);
+        }
+        console.log('完整文件路径:', fullPath);
 
         try {
+            console.log('尝试读取文件:', fullPath);
             const content = await fs.readFile(fullPath, 'utf-8');
             const stats = await fs.stat(fullPath);
+            console.log('文件读取成功，大小:', content.length);
 
             // 从内容中提取标题
             const titleMatch = content.match(/^#\s+(.+)$/m);
             const title = titleMatch ? titleMatch[1] : path.basename(docPath, '.md');
 
-            // 确定分类
-            const pathParts = docPath.split('/');
+            // 确定分类 - 处理路径格式
+            let cleanPath = docPath.startsWith('docs/') ? docPath.substring(5) : docPath;
+            const pathParts = cleanPath.split('/');
             const category = pathParts.length > 1 ? pathParts[0] : '根目录';
 
+            const responseData = {
+                path: docPath,
+                title: title,
+                content: content,
+                category: category,
+                lastModified: stats.mtime.toISOString(),
+                size: content.length
+            };
+
+            console.log('=== API调用完成: 文档获取成功 ===');
             res.json({
                 success: true,
-                data: {
-                    path: docPath,
-                    title: title,
-                    content: content,
-                    category: category,
-                    lastModified: stats.mtime.toISOString(),
-                    size: content.length
-                }
+                data: responseData
             });
         } catch (fileError) {
+            console.error('文件读取失败:', fileError.message);
             return res.status(404).json({
                 success: false,
-                error: '文档不存在'
+                error: '文档不存在: ' + fileError.message
             });
         }
     } catch (error) {
@@ -1061,7 +1080,9 @@ app.post('/api/vitepress/documents', async (req, res) => {
 // 更新VitePress文档
 app.put('/api/vitepress/documents', async (req, res) => {
     try {
+        console.log('=== API调用开始: PUT /api/vitepress/documents ===');
         const { path: docPath, title, content, category } = req.body;
+        console.log('请求参数:', { docPath, title: title ? title.substring(0, 50) + '...' : undefined, contentLength: content ? content.length : 0, category });
 
         if (!docPath) {
             return res.status(400).json({
@@ -1070,26 +1091,38 @@ app.put('/api/vitepress/documents', async (req, res) => {
             });
         }
 
-        const fullPath = path.join('docs', docPath);
+        // 处理路径：如果已经包含 docs/ 前缀，就直接使用；否则添加前缀
+        let fullPath;
+        if (docPath.startsWith('docs/')) {
+            fullPath = docPath;
+        } else {
+            fullPath = path.join('docs', docPath);
+        }
+        console.log('完整文件路径:', fullPath);
 
         // 检查文件是否存在
         try {
             await fs.access(fullPath);
+            console.log('文件存在，可以更新');
         } catch {
+            console.error('文件不存在:', fullPath);
             return res.status(404).json({
                 success: false,
-                error: '文档不存在'
+                error: '文档不存在: ' + fullPath
             });
         }
 
         // 读取现有内容
         let existingContent = await fs.readFile(fullPath, 'utf-8');
+        console.log('读取现有内容成功，长度:', existingContent.length);
 
         // 更新内容
         let newContent = content !== undefined ? content : existingContent;
+        console.log('新内容长度:', newContent.length);
 
         // 如果标题改变了，更新内容中的标题
         if (title) {
+            console.log('更新标题:', title);
             // 替换第一个 # 标题
             newContent = newContent.replace(/^#\s+.+$/m, `# ${title}`);
             // 如果没有找到标题，在开头添加
@@ -1099,18 +1132,23 @@ app.put('/api/vitepress/documents', async (req, res) => {
         }
 
         // 写入更新的内容
+        console.log('开始写入文件:', fullPath);
         await fs.writeFile(fullPath, newContent, 'utf-8');
+        console.log('文件写入成功');
 
+        const responseData = {
+            path: docPath,
+            title: title || path.basename(docPath, '.md'),
+            content: newContent,
+            category: category || path.dirname(docPath),
+            lastModified: new Date().toISOString(),
+            size: newContent.length
+        };
+
+        console.log('=== API调用完成: 文档更新成功 ===');
         res.json({
             success: true,
-            data: {
-                path: docPath,
-                title: title || path.basename(docPath, '.md'),
-                content: newContent,
-                category: category || path.dirname(docPath),
-                lastModified: new Date().toISOString(),
-                size: newContent.length
-            }
+            data: responseData
         });
     } catch (error) {
         console.error('更新VitePress文档失败:', error);
@@ -1164,11 +1202,14 @@ app.delete('/api/vitepress/documents', async (req, res) => {
 // 获取VitePress目录树
 app.get('/api/vitepress/tree', async (_req, res) => {
     try {
+        console.log('=== API调用开始: /api/vitepress/tree ===');
         const structure = await getDirectoryStructure('docs');
+        console.log('目录结构获取成功:', structure ? '有数据' : '无数据');
         res.json({
             success: true,
             data: structure ? [structure] : []
         });
+        console.log('=== API调用完成: 返回真实目录数据 ===');
     } catch (error) {
         console.error('获取VitePress目录树失败:', error);
         res.status(500).json({
@@ -1267,6 +1308,64 @@ app.post('/api/vitepress/preview', (_req, res) => {
     }
 });
 
+// 获取VitePress文档统计信息
+app.get('/api/vitepress/stats', async (_req, res) => {
+    try {
+        const structure = await getDirectoryStructure('docs');
+
+        // 统计文档数量
+        let totalFiles = 0;
+        let totalDirectories = 0;
+        let totalSize = 0;
+        let markdownFiles = 0;
+
+        function countItems(node) {
+            if (node.type === 'file') {
+                totalFiles++;
+                totalSize += node.size || 0;
+                if (node.name.endsWith('.md')) {
+                    markdownFiles++;
+                }
+            } else if (node.type === 'directory') {
+                totalDirectories++;
+                if (node.children) {
+                    node.children.forEach(child => countItems(child));
+                }
+            }
+        }
+
+        if (structure) {
+            countItems(structure);
+        }
+
+        const stats = {
+            totalFiles,
+            totalDirectories,
+            markdownFiles,
+            totalSize,
+            lastUpdated: new Date().toISOString(),
+            categories: [
+                { name: '公务员考试', count: 8 },
+                { name: '事业单位', count: 2 },
+                { name: '教师编制', count: 2 },
+                { name: '备考指南', count: 6 },
+                { name: '其他', count: markdownFiles - 18 }
+            ].filter(cat => cat.count > 0)
+        };
+
+        res.json({
+            success: true,
+            data: stats
+        });
+    } catch (error) {
+        console.error('获取VitePress统计信息失败:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // 用户数据管理
 app.get('/api/users/:id', (req, res) => {
     const userId = req.params.id;
@@ -1347,12 +1446,22 @@ function buildFileTree(dirPath, basePath = '') {
 // 获取目录结构
 async function getDirectoryStructure(dirPath, maxDepth = 3, currentDepth = 0, basePath = '') {
     try {
-        if (currentDepth >= maxDepth) return null;
+        console.log(`正在扫描目录: ${dirPath}, 深度: ${currentDepth}, 基础路径: ${basePath}`);
+
+        if (currentDepth >= maxDepth) {
+            console.log(`达到最大深度 ${maxDepth}，跳过: ${dirPath}`);
+            return null;
+        }
 
         const stats = await fs.stat(dirPath);
-        if (!stats.isDirectory()) return null;
+        if (!stats.isDirectory()) {
+            console.log(`不是目录，跳过: ${dirPath}`);
+            return null;
+        }
 
         const items = await fs.readdir(dirPath);
+        console.log(`目录 ${dirPath} 包含 ${items.length} 个项目:`, items);
+
         const structure = {
             name: path.basename(dirPath),
             path: basePath ? `docs/${basePath}` : 'docs',
@@ -1363,6 +1472,7 @@ async function getDirectoryStructure(dirPath, maxDepth = 3, currentDepth = 0, ba
         for (const item of items) {
             // 跳过隐藏文件和特殊目录
             if (item.startsWith('.') || item === 'node_modules' || item === 'dist' || item === 'public') {
+                console.log(`跳过隐藏/特殊文件: ${item}`);
                 continue;
             }
 
@@ -1371,11 +1481,13 @@ async function getDirectoryStructure(dirPath, maxDepth = 3, currentDepth = 0, ba
             const relativePath = basePath ? `${basePath}/${item}` : item;
 
             if (itemStats.isDirectory()) {
+                console.log(`处理子目录: ${item}`);
                 const subStructure = await getDirectoryStructure(itemPath, maxDepth, currentDepth + 1, relativePath);
                 if (subStructure) {
                     structure.children.push(subStructure);
                 }
             } else {
+                console.log(`处理文件: ${item}, 大小: ${itemStats.size}`);
                 // 显示所有文件类型，不只是markdown
                 structure.children.push({
                     name: item,
@@ -1395,10 +1507,11 @@ async function getDirectoryStructure(dirPath, maxDepth = 3, currentDepth = 0, ba
             return a.name.localeCompare(b.name);
         });
 
+        console.log(`目录结构构建完成: ${dirPath}, 子项目数量: ${structure.children.length}`);
         return structure;
     } catch (error) {
         console.error('获取目录结构失败:', error);
-        return null;
+        throw error; // 重新抛出错误以便上层捕获
     }
 }
 

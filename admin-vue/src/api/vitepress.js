@@ -1,6 +1,7 @@
 // VitePress文档操作API
 
 import { API_CONFIG, getApiUrl } from '@/config/index.js'
+import { request } from '@/utils/request.js'
 
 const API_BASE = API_CONFIG.FULL_API_URL
 
@@ -20,6 +21,22 @@ let documentStore = {
 让我们通过一个完整的公式推导来理解一元二次方程的求解过程：
 
 ::: formula-derivation 一元二次方程求根公式推导
+对于一般形式的一元二次方程 $ax^2 + bx + c = 0$ (其中 $a \neq 0$)
+
+首先将方程两边同时除以 $a$：
+$$x^2 + \frac{b}{a}x + \frac{c}{a} = 0$$
+
+然后配方，在等式两边同时加上 $(\frac{b}{2a})^2$：
+$$x^2 + \frac{b}{a}x + (\frac{b}{2a})^2 = (\frac{b}{2a})^2 - \frac{c}{a}$$
+
+左边可以写成完全平方式：
+$$(x + \frac{b}{2a})^2 = \frac{b^2}{4a^2} - \frac{c}{a} = \frac{b^2 - 4ac}{4a^2}$$
+
+开平方根：
+$$x + \frac{b}{2a} = \pm\frac{\sqrt{b^2 - 4ac}}{2a}$$
+
+最终得到求根公式：
+$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
 :::
 
 ### 数列推理
@@ -39,6 +56,15 @@ let documentStore = {
 几何推理涉及图形的变化规律，让我们通过一个交互式的图形推理例子来理解：
 
 ::: graphic-reasoning 图形旋转规律推理
+观察下列图形序列，找出变化规律：
+
+图形1：正方形
+图形2：正方形顺时针旋转45度
+图形3：正方形顺时针旋转90度
+图形4：？
+
+分析：每个图形都在前一个图形的基础上顺时针旋转45度
+答案：图形4应该是正方形顺时针旋转135度
 :::
 
 ### 立体几何可视化
@@ -46,6 +72,15 @@ let documentStore = {
 对于复杂的立体几何问题，3D可视化能帮助我们更好地理解空间关系：
 
 ::: 3d-visualization 立体几何展示
+展示一个标准立方体的3D模型，帮助理解立体几何的基本概念。
+
+立方体特征：
+- 6个面，每个面都是正方形
+- 8个顶点
+- 12条边，每条边长度相等
+- 所有面角都是90度
+
+通过3D可视化，可以更直观地理解立体几何中的空间关系、投影、截面等概念。
 :::
 
 ## 解题技巧
@@ -99,6 +134,17 @@ let documentStore = {
 ## 图形变化规律
 
 ::: graphic-reasoning 基础图形变化
+观察以下图形变化序列：
+
+序列1：圆形 → 三角形 → 正方形 → ？
+规律：边数递增（0边→3边→4边）
+答案：五边形
+
+序列2：大圆 → 中圆 → 小圆 → ？
+规律：尺寸递减
+答案：点
+
+通过观察图形的形状、大小、位置、颜色等属性的变化，可以找出规律并预测下一个图形。
 :::
 
 ### 常见变化类型
@@ -137,6 +183,19 @@ let documentStore = {
 观察下列图形的变化规律，选择正确答案。
 
 ::: graphic-reasoning 练习题示例
+题目：观察下列图形的变化规律，选择合适的答案
+
+图形序列：
+A: ○ → ◐ → ● → ？
+B: △ → ▲ → ？
+C: □ → ◧ → ■ → ？
+
+分析：
+- 序列A：空心圆 → 半实心圆 → 实心圆，规律是填充程度递增
+- 序列B：空心三角形 → 实心三角形，下一个可能是其他变化
+- 序列C：空心方形 → 半实心方形 → 实心方形，与序列A类似
+
+答案：图形变化遵循从空心到实心的填充规律
 :::
 
 ## 总结
@@ -213,6 +272,18 @@ D. 有些C不是A
 ## 3D可视化展示
 
 ::: 3d-visualization 立体几何基础
+展示基本的立体几何图形，帮助理解空间概念：
+
+1. **立方体**：6个面，8个顶点，12条边
+2. **球体**：所有点到中心距离相等
+3. **圆柱体**：两个平行的圆形底面
+4. **圆锥体**：一个圆形底面和一个顶点
+5. **棱锥**：多边形底面和一个顶点
+
+通过3D可视化可以：
+- 观察立体图形的各个面
+- 理解投影和截面
+- 分析空间位置关系
 :::
 
 ### 常见题型
@@ -234,6 +305,23 @@ D. 有些C不是A
 观察下列立体图形，选择正确的展开图。
 
 ::: 3d-visualization 展开图练习
+练习：立方体展开图识别
+
+题目：下面哪个是正确的立方体展开图？
+
+展开图特点：
+- 必须有6个正方形
+- 折叠后能形成封闭的立方体
+- 不能有重叠的面
+- 相邻的面在展开图中必须有公共边
+
+常见的立方体展开图有11种不同的形状，包括：
+- 十字形
+- T字形
+- Z字形
+- L字形等
+
+通过3D可视化可以验证展开图的正确性。
 :::
 
 ## 总结
@@ -252,20 +340,8 @@ export class VitePressAPI {
   // 获取所有文档列表
   static async getDocumentList() {
     try {
-      await new Promise(resolve => setTimeout(resolve, 200))
-      
-      const documents = Object.values(documentStore).map(doc => ({
-        path: doc.path,
-        name: doc.name,
-        lastModified: doc.lastModified,
-        size: doc.size
-      }))
-      
-      return {
-        success: true,
-        data: documents,
-        total: documents.length
-      }
+      const response = await request.get(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENTS}`)
+      return response.data
     } catch (error) {
       return {
         success: false,
@@ -277,17 +353,8 @@ export class VitePressAPI {
   // 获取文档内容
   static async getDocument(path) {
     try {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      const document = documentStore[path]
-      if (!document) {
-        throw new Error('文档不存在')
-      }
-      
-      return {
-        success: true,
-        data: document
-      }
+      const response = await request.get(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENT}`, { path })
+      return response.data
     } catch (error) {
       return {
         success: false,
@@ -297,22 +364,27 @@ export class VitePressAPI {
   }
 
   // 保存文档内容
-  static async saveDocument(path, content) {
+  static async saveDocument(path, content, title) {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      if (!documentStore[path]) {
-        throw new Error('文档不存在')
-      }
-      
-      documentStore[path].content = content
-      documentStore[path].lastModified = new Date().toISOString()
-      documentStore[path].size = content.length
-      
+      const response = await request.put(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENTS}`, {
+        path,
+        content,
+        title
+      })
+      return response.data
+    } catch (error) {
       return {
-        success: true,
-        data: documentStore[path]
+        success: false,
+        error: error.message
       }
+    }
+  }
+
+  // 获取文件树
+  static async getFileTree() {
+    try {
+      const response = await request.get(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.TREE}`)
+      return response.data
     } catch (error) {
       return {
         success: false,

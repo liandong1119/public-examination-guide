@@ -33,10 +33,37 @@
             <span>可视化编辑器</span>
           </el-menu-item>
 
-          <el-menu-item index="/vitepress">
-            <el-icon><Notebook /></el-icon>
-            <span>VitePress管理</span>
+          <el-menu-item index="/editor-comparison">
+            <el-icon><DataBoard /></el-icon>
+            <span>编辑器对比</span>
           </el-menu-item>
+
+          <el-sub-menu index="/vitepress-group">
+            <template #title>
+              <el-icon><Notebook /></el-icon>
+              <span>VitePress</span>
+            </template>
+            <el-menu-item index="/vitepress-editor">
+              <el-icon><EditPen /></el-icon>
+              <span>文档编辑器</span>
+            </el-menu-item>
+            <el-menu-item index="/vitepress">
+              <el-icon><Setting /></el-icon>
+              <span>管理面板</span>
+            </el-menu-item>
+            <el-menu-item index="/simple-vitepress">
+              <el-icon><Grid /></el-icon>
+              <span>高级编辑器</span>
+            </el-menu-item>
+            <el-menu-item index="/simple-vitepress-clean">
+              <el-icon><Star /></el-icon>
+              <span>高级编辑器（优化版）</span>
+            </el-menu-item>
+            <el-menu-item index="/powerful-editor">
+              <el-icon><EditPen /></el-icon>
+              <span>🚀 强化版编辑器</span>
+            </el-menu-item>
+          </el-sub-menu>
 
           <el-menu-item index="/file-manager">
             <el-icon><FolderOpened /></el-icon>
@@ -114,7 +141,8 @@ import {
   Setting,
   Expand,
   Fold,
-  Bell
+  Bell,
+  Star
 } from '@element-plus/icons-vue'
 
 const sidebarCollapsed = ref(false)

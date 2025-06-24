@@ -5,7 +5,10 @@ hero:
   name: 智慧公考
   text: AI驱动的沉浸式学习平台
   tagline: 3D可视化 · 智能推导 · 个性化学习路径
-  actions:
+  actions:$$\text{数学公式}$$$$\text{数学公式}$$$$\text{数学公式}$$
+# 标题文本| 列1 | 列2 | 列3 |
+|-----|-----|-----|
+| 内容1 | 内容2 | 内容3 |
     - theme: brand
       text: 开始学习之旅
       link: /guide/

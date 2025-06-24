@@ -1,4 +1,20 @@
-# 公务员面试
+# 公务员面试111
+
+::: formula-derivation 公式推导示例
+{
+  "title": "二次方程求解",
+  "steps": [
+    {
+      "description": "标准形式",
+      "formula": "ax^2 + bx + c = 0"
+    },
+    {
+      "description": "求解公式",
+      "formula": "x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}"
+    }
+  ]
+}
+:::
 
 ## 📖 面试概述
 
@@ -11,6 +27,20 @@
 - 题目、时间、评分标准统一
 - 考官按照既定程序进行
 - 最常见的面试形式
+
+::: 3d-visualization 3D坐标系
+```json
+{
+  "type": "coordinate",
+  "axes": ["x", "y", "z"],
+  "points": {points}
+}
+```
+
+三维坐标系统展示
+:::
+
+
 
 **流程**：
 1. 抽签确定顺序
@@ -272,3 +302,11 @@
 ---
 
 *最后更新时间: 2024年6月16日*
+
+
+::: formula-derivation 二次方程求根公式
+$$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+用于求解二次方程的根
+:::
+
