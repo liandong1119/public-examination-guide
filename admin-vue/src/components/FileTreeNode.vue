@@ -19,10 +19,15 @@
       <button
         v-if="node.type === 'folder'"
         @click.stop="handleToggle"
-        class="expand-btn">
-        <span class="expand-icon">{{ isExpanded ? '📂' : '📁' }}</span>
+        class="expand-btn"
+        :class="{ 'is-expanded': isExpanded }">
+        <span class="expand-icon">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+            <path d="M4.5 3L7.5 6L4.5 9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
       </button>
-      
+
       <!-- 文件/文件夹图标 -->
       <span class="node-icon">
         {{ getNodeIcon() }}
@@ -341,21 +346,35 @@ watch(() => props.searchQuery, () => {
       border: none;
       cursor: pointer;
       padding: 2px;
-      border-radius: 3px;
+      border-radius: 4px;
       transition: all 0.2s ease;
       width: 20px;
       height: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #6c757d;
 
       &:hover {
-        background: rgba(0, 0, 0, 0.1);
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+      }
+
+      &.is-expanded {
+        .expand-icon {
+          transform: rotate(90deg);
+        }
       }
 
       .expand-icon {
-        font-size: 14px;
         transition: transform 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+          transition: transform 0.2s ease;
+        }
       }
     }
 
@@ -412,22 +431,28 @@ watch(() => props.searchQuery, () => {
       align-items: center;
 
       .indicator {
-        font-size: 8px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
+        font-size: 10px;
+        min-width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        padding: 0 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 
         &.modified {
-          background: #f39c12;
+          background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
         }
 
         &.new {
-          background: #27ae60;
+          background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
         }
 
         &.error {
-          background: #e74c3c;
+          background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
         }
       }
     }

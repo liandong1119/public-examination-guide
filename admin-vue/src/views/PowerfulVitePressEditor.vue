@@ -39,6 +39,8 @@
     <div class="editor-main">
       <!-- 左侧文件树 -->
       <div class="file-sidebar" :class="{ collapsed: sidebarCollapsed }">
+
+
         <EnhancedFileTree
           :tree-data="treeData"
           :enable-drag-drop="true"
@@ -56,9 +58,25 @@
       <!-- 中间编辑器区域 -->
       <div class="editor-area">
         <div v-if="!currentFile" class="empty-state">
-          <div class="empty-icon">📝</div>
-          <h3>选择一个文档开始编辑</h3>
-          <p>从左侧文件树中选择文档，或创建新文档</p>
+          <div class="empty-content">
+            <div class="empty-icon">✨</div>
+            <h3>开始创作你的文档</h3>
+            <p>选择左侧文件开始编辑，或创建新的 Markdown 文档来分享你的知识</p>
+            <div class="empty-actions">
+              <div class="action-card" @click="createNewDocument">
+                <span class="action-icon">📄</span>
+                <span>新建文档</span>
+              </div>
+              <div class="action-card" @click="openFileDialog">
+                <span class="action-icon">📁</span>
+                <span>打开文件</span>
+              </div>
+              <div class="action-card" @click="showTemplates">
+                <span class="action-icon">🎨</span>
+                <span>使用模板</span>
+              </div>
+            </div>
+          </div>
         </div>
         
         <div v-else class="editor-container">
@@ -79,12 +97,13 @@
                 v-model="documentContent"
                 :theme="editorTheme"
                 :show-toolbar="true"
-                :default-view-mode="showPreview ? 'split' : 'edit'"
+                :default-view-mode="'edit'"
                 :enable-advanced-features="true"
                 :enable-component-insertion="true"
-                :enable-markdown-preview="showPreview"
+                :enable-markdown-preview="false"
                 @change="handleContentChange"
                 @cursor-position-change="handleCursorChange"
+                @scroll-change="handleEditorScroll"
                 @save="saveDocument"
                 class="monaco-editor-container" />
             </div>
@@ -227,10 +246,11 @@ const markdownPreview = ref(null)
 // 自动保存定时器
 const autoSaveTimer = ref(null)
 
+// 滚动同步状态
+const isScrollSyncing = ref(false)
+
 // 文件树数据
-const treeData = computed(() => {
-  return buildTreeStructure(fileList.value)
-})
+const treeData = ref([])
 
 // 计算属性
 const isModified = computed(() => documentContent.value !== originalContent.value)
@@ -244,17 +264,45 @@ const filteredFiles = computed(() => {
   )
 })
 
+// 测试API方法
+const testAPI = async () => {
+  console.log('手动测试API调用...')
+  try {
+    const response = await fetch('http://localhost:3001/api/vitepress/tree')
+    console.log('直接fetch响应:', response)
+    if (response.ok) {
+      const data = await response.json()
+      console.log('直接fetch数据:', data)
+      ElMessage.success('直接API调用成功！')
+    } else {
+      console.error('直接fetch失败:', response.status, response.statusText)
+      ElMessage.error('直接API调用失败')
+    }
+  } catch (error) {
+    console.error('直接fetch错误:', error)
+    ElMessage.error('直接API调用错误: ' + error.message)
+  }
+}
+
 // 方法
 const refreshFiles = async () => {
   loading.value = true
   try {
     const result = await VitePressAPI.getFileTree()
+
     if (result.success) {
-      fileList.value = flattenFileTree(result.data)
-      ElMessage.success('文件列表已刷新')
+      // 直接使用API返回的树形数据，并添加必要的id字段
+      const processedTreeData = processTreeData(result.data)
+      treeData.value = processedTreeData
+
+      // 同时生成扁平化的文件列表用于其他功能
+      const flattened = flattenFileTree(result.data)
+      fileList.value = flattened
+
+      ElMessage.success(`文件树已刷新，共${flattened.length}个文件`)
     } else {
       // 使用模拟数据
-      fileList.value = [
+      const mockFiles = [
         { name: 'index.md', path: 'docs/index.md', type: 'file' },
         { name: 'guide.md', path: 'docs/guide.md', type: 'file' },
         { name: 'math-reasoning.md', path: 'docs/civil-service/math-reasoning.md', type: 'file' },
@@ -262,13 +310,69 @@ const refreshFiles = async () => {
         { name: 'data-analysis.md', path: 'docs/civil-service/data-analysis.md', type: 'file' },
         { name: '3d-geometry.md', path: 'docs/civil-service/3d-geometry.md', type: 'file' }
       ]
+      fileList.value = mockFiles
+      treeData.value = buildTreeStructure(mockFiles)
       ElMessage.success('已加载示例文件')
     }
   } catch (error) {
+    console.error('刷新文件列表失败:', error)
     ElMessage.error('刷新失败：' + error.message)
   } finally {
     loading.value = false
   }
+}
+
+// 空状态操作方法
+const createNewDocument = () => {
+  createNewFile()
+}
+
+const openFileDialog = () => {
+  ElMessage.info('打开文件功能开发中...')
+}
+
+const showTemplates = () => {
+  ElMessage.info('模板功能开发中...')
+}
+
+// 处理API返回的树形数据，添加必要的字段
+const processTreeData = (tree) => {
+  const processNode = (node) => {
+
+    const processedNode = {
+      id: node.path || node.name, // 使用path作为唯一id
+      name: node.name,
+      path: node.path,
+      type: node.type === 'directory' ? 'folder' : node.type, // 统一类型名称
+      size: node.size,
+      modified: node.modified
+    }
+
+    // 处理children
+    if (node.children && Array.isArray(node.children) && node.children.length > 0) {
+
+      processedNode.children = node.children.map(processNode)
+    } else {
+
+      // 对于文件夹，即使没有children也要设置为空数组
+      if (processedNode.type === 'folder') {
+        processedNode.children = []
+      }
+    }
+
+
+    return processedNode
+  }
+
+
+  let result
+  if (Array.isArray(tree)) {
+    result = tree.map(processNode)
+  } else {
+    result = [processNode(tree)]
+  }
+
+  return result
 }
 
 const flattenFileTree = (tree) => {
@@ -276,12 +380,14 @@ const flattenFileTree = (tree) => {
   const traverse = (nodes, parentPath = '') => {
     if (!Array.isArray(nodes)) return
     nodes.forEach(node => {
-      const fullPath = parentPath ? `${parentPath}/${node.name}` : node.name
+      const fullPath = node.path || (parentPath ? `${parentPath}/${node.name}` : node.name)
       if (node.type === 'file' && node.name.endsWith('.md')) {
         result.push({
           name: node.name,
           path: fullPath,
-          type: 'file'
+          type: 'file',
+          size: node.size,
+          modified: node.modified
         })
       }
       if (node.children) {
@@ -484,10 +590,79 @@ const formatDocument = () => {
   }
 }
 
+const handleEditorScroll = (scrollData) => {
+  // 防止滚动同步循环
+  if (isScrollSyncing.value) return
+
+  // 处理编辑器滚动同步到预览
+  if (markdownPreview.value && scrollData && scrollData.scrollHeight > 0) {
+    // 尝试多个可能的滚动容器
+    const previewElement = markdownPreview.value.$el?.querySelector('.preview-content')
+    const previewContainer = markdownPreview.value.$el
+
+    // 选择实际可滚动的元素
+    let scrollableElement = null
+    if (previewElement && previewElement.scrollHeight > previewElement.clientHeight) {
+      scrollableElement = previewElement
+    } else if (previewContainer && previewContainer.scrollHeight > previewContainer.clientHeight) {
+      scrollableElement = previewContainer
+    }
+
+    if (scrollableElement) {
+      isScrollSyncing.value = true
+
+      // 计算滚动百分比
+      const scrollPercentage = Math.max(0, Math.min(1,
+        scrollData.scrollTop / (scrollData.scrollHeight - scrollData.clientHeight)
+      ))
+
+      // 计算预览应该滚动到的位置
+      const maxScrollTop = scrollableElement.scrollHeight - scrollableElement.clientHeight
+      const targetScrollTop = scrollPercentage * maxScrollTop
+
+      // 设置预览滚动位置
+      scrollableElement.scrollTop = targetScrollTop
+
+      // 重置同步状态
+      setTimeout(() => {
+        isScrollSyncing.value = false
+      }, 100)
+    }
+  }
+}
+
 const handlePreviewScroll = (scrollData) => {
-  // 处理预览滚动同步
-  if (monacoEditor.value && monacoEditor.value.syncScroll) {
-    monacoEditor.value.syncScroll(scrollData)
+  // 防止滚动同步循环
+  if (isScrollSyncing.value) return
+
+  // 处理预览滚动同步到编辑器
+  if (monacoEditor.value?.getEditor && scrollData && scrollData.scrollHeight > 0) {
+    const editor = monacoEditor.value.getEditor()
+
+    if (editor && scrollData.scrollHeight > scrollData.clientHeight) {
+      isScrollSyncing.value = true
+
+      // 计算滚动百分比
+      const scrollPercentage = Math.max(0, Math.min(1,
+        scrollData.scrollTop / (scrollData.scrollHeight - scrollData.clientHeight)
+      ))
+
+      // 获取编辑器滚动信息
+      const editorScrollHeight = editor.getScrollHeight()
+      const editorHeight = editor.getLayoutInfo().height
+
+      // 计算编辑器应该滚动到的位置
+      const maxScrollTop = Math.max(0, editorScrollHeight - editorHeight)
+      const targetScrollTop = scrollPercentage * maxScrollTop
+
+      // 设置编辑器滚动位置
+      editor.setScrollTop(targetScrollTop)
+
+      // 重置同步状态
+      setTimeout(() => {
+        isScrollSyncing.value = false
+      }, 100)
+    }
   }
 }
 
@@ -819,20 +994,20 @@ watch(documentContent, () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
 }
 
 .editor-header {
   height: 70px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
 
   .header-left {
     display: flex;
@@ -844,10 +1019,11 @@ watch(documentContent, () => {
       color: #2c3e50;
       font-size: 20px;
       font-weight: 700;
-      background: linear-gradient(45deg, #667eea, #764ba2);
+      background: linear-gradient(135deg, #3b82f6 0%, #1e40af 50%, #1d4ed8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      letter-spacing: -0.025em;
     }
 
     .file-info {
@@ -928,17 +1104,52 @@ watch(documentContent, () => {
 
   &.collapsed {
     width: 60px;
+    overflow: hidden;
 
-    .sidebar-header h3,
-    .search-box,
-    .file-name,
-    .file-actions {
-      display: none;
+    .sidebar-header {
+      padding: 20px 8px;
+
+      h3 {
+        display: none;
+      }
+
+      .collapse-btn {
+        margin: 0 auto;
+        transform: rotate(180deg);
+      }
+    }
+
+    .file-tree {
+      padding: 8px;
+
+      .search-box {
+        display: none;
+      }
     }
 
     .file-item {
       justify-content: center;
-      padding: 12px;
+      padding: 12px 8px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+
+      .file-name,
+      .file-actions {
+        display: none;
+      }
+
+      .file-icon {
+        font-size: 18px;
+      }
+
+      &:hover {
+        transform: none;
+        background: rgba(102, 126, 234, 0.1);
+      }
+
+      &.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
     }
   }
 
@@ -999,7 +1210,7 @@ watch(documentContent, () => {
         position: relative;
 
         &:hover {
-          background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+          background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
           transform: translateX(4px);
 
           .file-actions {
@@ -1008,10 +1219,10 @@ watch(documentContent, () => {
         }
 
         &.active {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           color: white;
           font-weight: 600;
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 
           .file-icon {
             filter: brightness(0) invert(1);
@@ -1065,28 +1276,97 @@ watch(documentContent, () => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #7f8c8d;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #64748b;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border-radius: 0 16px 16px 0;
+    position: relative;
+    overflow: hidden;
+
+    // 添加装饰性背景
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    .empty-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 400px;
+      padding: 40px 20px;
+    }
 
     .empty-icon {
-      font-size: 64px;
-      margin-bottom: 24px;
-      opacity: 0.6;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 32px;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      color: white;
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
       animation: float 3s ease-in-out infinite;
     }
 
     h3 {
-      margin: 0 0 12px 0;
-      font-size: 24px;
-      color: #2c3e50;
-      font-weight: 600;
+      margin: 0 0 16px 0;
+      font-size: 28px;
+      color: #1e293b;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     p {
-      margin: 0;
+      margin: 0 0 32px 0;
       font-size: 16px;
-      opacity: 0.8;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+
+      .action-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #475569;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+          border-color: #3b82f6;
+          color: #3b82f6;
+        }
+
+        .action-icon {
+          font-size: 16px;
+        }
+      }
     }
   }
 
@@ -1105,6 +1385,8 @@ watch(documentContent, () => {
     flex: 1;
     display: flex;
     overflow: hidden;
+    min-height: calc(100vh - 200px); // 动态计算最小高度
+    height: calc(100vh - 200px); // 动态计算高度
 
     &.split-view {
       .edit-panel {
@@ -1138,6 +1420,7 @@ watch(documentContent, () => {
       display: flex;
       flex-direction: column;
       background: #fafafa;
+      height: 100%; // 确保预览面板占满可用高度
 
       .preview-header {
         padding: 16px 20px;
@@ -1146,6 +1429,7 @@ watch(documentContent, () => {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-shrink: 0; // 防止头部被压缩
 
         h4 {
           margin: 0;
@@ -1175,12 +1459,7 @@ watch(documentContent, () => {
         }
       }
 
-      .preview-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-        background: white;
-      }
+      // 移除这里的preview-content样式，让MarkdownPreview组件自己处理
     }
   }
 
@@ -1254,6 +1533,15 @@ watch(documentContent, () => {
   }
   50% {
     transform: translateY(-10px);
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

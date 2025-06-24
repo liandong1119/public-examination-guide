@@ -47,6 +47,22 @@
       </div>
     </div>
 
+    <!-- 折叠状态的简化显示 -->
+    <div class="collapsed-content" v-if="isCollapsed">
+      <div class="collapsed-stats">
+        <div class="stats-badge">{{ props.treeData.length }}</div>
+        <div class="stats-label">项目</div>
+      </div>
+      <div class="collapsed-actions">
+        <button @click="createNewFile" class="collapsed-btn" title="新建文件">
+          📄
+        </button>
+        <button @click="createNewFolder" class="collapsed-btn" title="新建文件夹">
+          📁
+        </button>
+      </div>
+    </div>
+
     <!-- 文件树内容 -->
     <div class="tree-content" v-if="!isCollapsed" v-loading="loading">
       <div class="tree-stats">
@@ -57,6 +73,10 @@
       <!-- 树形结构 -->
       <div class="tree-container">
         <div class="tree-list">
+          <div v-if="filteredTreeData.length === 0" class="empty-state">
+            <div class="empty-icon">📁</div>
+            <p class="empty-text">暂无文件</p>
+          </div>
           <FileTreeNode
             v-for="element in filteredTreeData"
             :key="element.id"
@@ -445,6 +465,17 @@ watch(searchQuery, () => {
   }
 })
 
+// 监听treeData变化，自动展开根目录
+watch(() => props.treeData, (newTreeData) => {
+  if (newTreeData && newTreeData.length > 0) {
+    newTreeData.forEach(node => {
+      if (node.type === 'folder') {
+        expandedFolders.value.add(node.id)
+      }
+    })
+  }
+}, { immediate: true })
+
 // 生命周期
 onMounted(() => {
   // 初始化展开根目录
@@ -464,6 +495,7 @@ onMounted(() => {
   background: white;
   border-radius: 8px;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .tree-header {
@@ -581,6 +613,68 @@ onMounted(() => {
     .empty-text {
       margin: 0 0 16px 0;
       font-size: 14px;
+    }
+  }
+}
+
+// 折叠状态样式
+.collapsed-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 8px;
+  gap: 16px;
+
+  .collapsed-stats {
+    text-align: center;
+
+    .stats-badge {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+      margin: 0 auto 4px;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .stats-label {
+      font-size: 10px;
+      color: #6c757d;
+      font-weight: 500;
+    }
+  }
+
+  .collapsed-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .collapsed-btn {
+      width: 36px;
+      height: 36px;
+      background: rgba(102, 126, 234, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.2);
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+      }
     }
   }
 }

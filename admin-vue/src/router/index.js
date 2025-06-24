@@ -40,6 +40,12 @@ const routes = [
     name: 'ComponentManager',
     component: () => import('@/views/ComponentManager.vue'),
     meta: { title: '组件管理' }
+  },
+  {
+    path: '/logs',
+    name: 'SystemLogs',
+    component: () => import('@/views/SystemLogs.vue'),
+    meta: { title: '系统日志' }
   }
 ]
 

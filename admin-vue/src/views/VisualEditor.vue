@@ -32,11 +32,11 @@
           </div>
           
           <div class="editor-actions">
-            <el-button @click="previewComponent">
+            <el-button @click="previewComponent" :loading="isLoading">
               <el-icon><View /></el-icon>
               预览
             </el-button>
-            <el-button @click="saveComponent" type="primary">
+            <el-button @click="saveComponent" type="primary" :loading="isSaving">
               <el-icon><Document /></el-icon>
               保存
             </el-button>
@@ -46,44 +46,28 @@
             </el-button>
           </div>
         </div>
-        
-        <!-- 图形推理编辑器 -->
-        <div v-if="selectedType === 'graphic-reasoning'" class="editor-component">
-          <div class="editor-demo">
-            <h3>🧩 图形推理编辑器演示</h3>
-            <p>专业的图形编辑功能，支持：</p>
-            <ul>
-              <li>✅ 多种基础形状（圆形、矩形、三角形、箭头、星形等）</li>
-              <li>✅ 图形组合与复制功能</li>
-              <li>✅ 图层管理与属性编辑</li>
-              <li>✅ 实时预览与导出</li>
-              <li>✅ 复杂图形推理题目创建</li>
-            </ul>
+
+        <!-- 编辑器加载状态 -->
+        <div v-if="isLoadingEditor" class="editor-loading">
+          <div class="loading-content">
+            <el-skeleton :rows="5" animated />
+            <div class="loading-text">正在加载编辑器...</div>
           </div>
         </div>
 
-        <!-- 公式编辑器 -->
-        <div v-if="selectedType === 'step-formula'" class="editor-component">
-          <div class="editor-demo">
-            <h3>📐 分步公式编辑器演示</h3>
-            <p>专业的数学公式编辑功能，支持：</p>
-            <ul>
-              <li>✅ LaTeX语法支持</li>
-              <li>✅ 分步推导过程</li>
-              <li>✅ 实时公式预览</li>
-              <li>✅ 步骤解释与重点标注</li>
-              <li>✅ Monaco编辑器集成</li>
-            </ul>
-          </div>
+        <!-- 图形推理编辑器 -->
+        <div v-else-if="selectedType === 'graphic-reasoning'" class="editor-component">
+          <GraphicEditor ref="graphicEditorRef" @ready="onEditorReady" />
         </div>
-        
+
+        <!-- 公式编辑器 -->
+        <div v-else-if="selectedType === 'step-formula'" class="editor-component">
+          <FormulaEditor ref="formulaEditorRef" @ready="onEditorReady" />
+        </div>
+
         <!-- 3D可视化编辑器 -->
-        <div v-if="selectedType === '3d-visualization'" class="editor-component">
-          <div class="coming-soon">
-            <el-icon size="64"><Box /></el-icon>
-            <h3>3D可视化编辑器</h3>
-            <p>即将推出，敬请期待...</p>
-          </div>
+        <div v-else-if="selectedType === '3d-visualization'" class="editor-component">
+          <ThreeDEditor ref="threeDEditorRef" @ready="onEditorReady" />
         </div>
       </div>
       
@@ -126,12 +110,16 @@
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 
-import { 
-  View, 
-  Document, 
-  Download, 
-  Box 
+import {
+  View,
+  Document,
+  Download,
+  Box
 } from '@element-plus/icons-vue'
+
+import GraphicEditor from '@/components/VisualEditor/GraphicEditor.vue'
+import FormulaEditor from '@/components/VisualEditor/FormulaEditor.vue'
+import ThreeDEditor from '@/components/VisualEditor/ThreeDEditor.vue'
 
 // 编辑器类型定义
 const editorTypes = [
@@ -160,10 +148,14 @@ const selectedType = ref('')
 const componentTitle = ref('')
 const showPreview = ref(false)
 const previewHtml = ref('')
+const isLoading = ref(false)
+const isSaving = ref(false)
+const isLoadingEditor = ref(false)
 
 // 编辑器引用
 const graphicEditorRef = ref(null)
 const formulaEditorRef = ref(null)
+const threeDEditorRef = ref(null)
 
 // 已保存的组件
 const savedComponents = ref([
@@ -192,26 +184,47 @@ const getCurrentEditor = () => {
 
 // 选择编辑器类型
 const selectEditorType = (type) => {
+  isLoadingEditor.value = true
   selectedType.value = type
   componentTitle.value = ''
+
+  // 模拟编辑器加载时间
+  setTimeout(() => {
+    isLoadingEditor.value = false
+  }, 1000)
+}
+
+// 编辑器准备就绪回调
+const onEditorReady = () => {
+  isLoadingEditor.value = false
 }
 
 // 预览组件
-const previewComponent = () => {
-  let data = null
-  
-  if (selectedType.value === 'graphic-reasoning' && graphicEditorRef.value) {
-    data = graphicEditorRef.value.getCanvasData()
-  } else if (selectedType.value === 'step-formula' && formulaEditorRef.value) {
-    data = formulaEditorRef.value.getFormulaData()
-  }
-  
-  if (data) {
-    // 生成预览HTML
-    previewHtml.value = generatePreviewHtml(selectedType.value, data)
-    showPreview.value = true
-  } else {
-    ElMessage.warning('请先创建一些内容')
+const previewComponent = async () => {
+  isLoading.value = true
+
+  try {
+    let data = null
+
+    if (selectedType.value === 'graphic-reasoning' && graphicEditorRef.value) {
+      data = graphicEditorRef.value.getCanvasData()
+    } else if (selectedType.value === 'step-formula' && formulaEditorRef.value) {
+      data = formulaEditorRef.value.getFormulaData()
+    } else if (selectedType.value === '3d-visualization' && threeDEditorRef.value) {
+      data = threeDEditorRef.value.getSceneData()
+    }
+
+    if (data) {
+      // 生成预览HTML
+      previewHtml.value = generatePreviewHtml(selectedType.value, data)
+      showPreview.value = true
+    } else {
+      ElMessage.warning('请先创建一些内容')
+    }
+  } catch (error) {
+    ElMessage.error('预览失败: ' + error.message)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -221,49 +234,80 @@ const saveComponent = async () => {
     ElMessage.warning('请输入组件标题')
     return
   }
-  
-  let data = null
-  
-  if (selectedType.value === 'graphic-reasoning' && graphicEditorRef.value) {
-    data = graphicEditorRef.value.getCanvasData()
-  } else if (selectedType.value === 'step-formula' && formulaEditorRef.value) {
-    data = formulaEditorRef.value.getFormulaData()
-  }
-  
-  if (data) {
-    try {
+
+  isSaving.value = true
+
+  try {
+    let data = null
+    let thumbnail = '/thumbnails/default.png'
+
+    if (selectedType.value === 'graphic-reasoning' && graphicEditorRef.value) {
+      data = graphicEditorRef.value.getCanvasData()
+      thumbnail = graphicEditorRef.value.exportImage()
+    } else if (selectedType.value === 'step-formula' && formulaEditorRef.value) {
+      data = formulaEditorRef.value.getFormulaData()
+    } else if (selectedType.value === '3d-visualization' && threeDEditorRef.value) {
+      data = threeDEditorRef.value.getSceneData()
+      thumbnail = threeDEditorRef.value.exportImage()
+    }
+
+    if (data) {
       // 这里应该调用API保存到数据库
       const component = {
         title: componentTitle.value,
         type: selectedType.value,
         data: data,
-        thumbnail: selectedType.value === 'graphic-reasoning' 
-          ? graphicEditorRef.value.exportImage() 
-          : '/thumbnails/default.png'
+        thumbnail: thumbnail,
+        createTime: new Date().toISOString()
       }
-      
-      // 模拟API调用
+
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // 添加到本地组件列表
+      savedComponents.value.unshift({
+        id: Date.now(),
+        title: component.title,
+        description: `${getCurrentEditor().name}组件`,
+        type: getTypeDisplayName(selectedType.value),
+        thumbnail: component.thumbnail,
+        updateTime: new Date().toISOString().split('T')[0]
+      })
+
       console.log('保存组件:', component)
-      
       ElMessage.success('组件保存成功')
-    } catch (error) {
-      ElMessage.error('保存失败: ' + error.message)
+    } else {
+      ElMessage.warning('没有可保存的内容')
     }
-  } else {
-    ElMessage.warning('没有可保存的内容')
+  } catch (error) {
+    ElMessage.error('保存失败: ' + error.message)
+  } finally {
+    isSaving.value = false
   }
+}
+
+// 获取类型显示名称
+const getTypeDisplayName = (type) => {
+  const typeMap = {
+    'graphic-reasoning': '图形推理',
+    'step-formula': '公式推导',
+    '3d-visualization': '3D可视化'
+  }
+  return typeMap[type] || type
 }
 
 // 导出组件
 const exportComponent = () => {
   let data = null
-  
+
   if (selectedType.value === 'graphic-reasoning' && graphicEditorRef.value) {
     data = graphicEditorRef.value.getCanvasData()
   } else if (selectedType.value === 'step-formula' && formulaEditorRef.value) {
     data = formulaEditorRef.value.getFormulaData()
+  } else if (selectedType.value === '3d-visualization' && threeDEditorRef.value) {
+    data = threeDEditorRef.value.getSceneData()
   }
-  
+
   if (data) {
     const exportData = {
       title: componentTitle.value,
@@ -271,18 +315,18 @@ const exportComponent = () => {
       data: data,
       exportTime: new Date().toISOString()
     }
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: 'application/json'
     })
-    
+
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `${componentTitle.value || 'component'}.json`
     a.click()
     URL.revokeObjectURL(url)
-    
+
     ElMessage.success('组件导出成功')
   } else {
     ElMessage.warning('没有可导出的内容')
@@ -319,21 +363,44 @@ const generatePreviewHtml = (type, data) => {
         </div>
       </div>
     `
+  } else if (type === '3d-visualization') {
+    return `
+      <div class="threed-preview">
+        <h3>${componentTitle.value}</h3>
+        <div class="scene-preview">
+          <p>3D场景包含 ${data.length} 个对象：</p>
+          <ul>
+            ${data.map(obj => `
+              <li>${obj.name} (${obj.type})</li>
+            `).join('')}
+          </ul>
+        </div>
+      </div>
+    `
   }
   return '<p>预览内容</p>'
 }
 
 // 编辑组件
 const editComponent = (component) => {
-  selectedType.value = component.type === '图形推理' ? 'graphic-reasoning' : 'step-formula'
+  if (component.type === '图形推理') {
+    selectedType.value = 'graphic-reasoning'
+  } else if (component.type === '公式推导') {
+    selectedType.value = 'step-formula'
+  } else if (component.type === '3D可视化') {
+    selectedType.value = '3d-visualization'
+  }
+
   componentTitle.value = component.title
-  
+
   // 加载组件数据
   setTimeout(() => {
     if (component.type === '图形推理' && graphicEditorRef.value) {
       // graphicEditorRef.value.loadCanvasData(component.data)
     } else if (component.type === '公式推导' && formulaEditorRef.value) {
       // formulaEditorRef.value.loadFormulaData(component.data)
+    } else if (component.type === '3D可视化' && threeDEditorRef.value) {
+      // threeDEditorRef.value.loadSceneData(component.data)
     }
   }, 100)
 }
@@ -471,34 +538,24 @@ const deleteComponent = (component) => {
     .editor-component {
       height: 70vh;
       min-height: 600px;
+    }
 
-      .editor-demo {
-        padding: 40px;
+    .editor-loading {
+      height: 70vh;
+      min-height: 600px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .loading-content {
         text-align: center;
+        width: 100%;
+        max-width: 400px;
 
-        h3 {
-          margin: 0 0 20px 0;
-          color: #333;
-          font-size: 24px;
-        }
-
-        p {
-          margin: 0 0 20px 0;
+        .loading-text {
+          margin-top: 20px;
           color: #666;
           font-size: 16px;
-        }
-
-        ul {
-          text-align: left;
-          max-width: 600px;
-          margin: 0 auto;
-
-          li {
-            margin-bottom: 12px;
-            color: #555;
-            font-size: 15px;
-            line-height: 1.6;
-          }
         }
       }
     }

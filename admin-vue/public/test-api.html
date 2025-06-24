@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试</title>
+</head>
+<body>
+    <h1>API连接测试</h1>
+    <button onclick="testAPI()">测试VitePress API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '正在测试API连接...';
+            
+            try {
+                // 测试相对路径API调用
+                console.log('测试相对路径API调用...');
+                const response = await fetch('/api/vitepress/tree');
+                console.log('响应状态:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('API响应数据:', data);
+                    resultDiv.innerHTML = `
+                        <h3>API调用成功！</h3>
+                        <p>状态码: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3>API调用失败</h3>
+                        <p>状态码: ${response.status}</p>
+                        <p>状态文本: ${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('API调用错误:', error);
+                resultDiv.innerHTML = `
+                    <h3>API调用错误</h3>
+                    <p>错误信息: ${error.message}</p>
+                `;
+                
+                // 尝试直接调用后端API
+                try {
+                    console.log('尝试直接调用后端API...');
+                    const directResponse = await fetch('http://localhost:3001/api/vitepress/tree');
+                    if (directResponse.ok) {
+                        const directData = await directResponse.json();
+                        resultDiv.innerHTML += `
+                            <h3>直接调用后端API成功！</h3>
+                            <p>这说明代理配置有问题</p>
+                            <pre>${JSON.stringify(directData, null, 2)}</pre>
+                        `;
+                    }
+                } catch (directError) {
+                    console.error('直接调用后端API也失败:', directError);
+                    resultDiv.innerHTML += `
+                        <p>直接调用后端API也失败: ${directError.message}</p>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

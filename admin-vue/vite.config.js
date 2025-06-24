@@ -4,7 +4,7 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/admin/',
+  base: '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
@@ -15,11 +15,28 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
-        changeOrigin: true
+        changeOrigin: true,
+        rewrite: (path) => {
+          console.log('代理请求:', path)
+          return path
+        }
       }
     }
   },
   build: {
-    outDir: 'dist'
+    outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'monaco-editor': ['monaco-editor']
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: ['monaco-editor']
+  },
+  define: {
+    'process.env': {}
   }
 })

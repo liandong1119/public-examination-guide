@@ -2,45 +2,124 @@
   <div class="graphic-editor">
     <!-- 工具栏 -->
     <div class="toolbar">
-      <div class="tool-group">
-        <span class="group-title">基础形状</span>
-        <el-button-group>
-          <el-button 
-            v-for="shape in basicShapes" 
-            :key="shape.type"
-            :type="selectedTool === shape.type ? 'primary' : 'default'"
-            @click="selectTool(shape.type)"
-            :title="shape.name">
-            <el-icon>{{ shape.icon }}</el-icon>
-          </el-button>
-        </el-button-group>
+      <div class="toolbar-left">
+        <el-tabs v-model="activeToolTab" type="card" size="small">
+          <el-tab-pane label="基础形状" name="shapes">
+            <div class="tool-grid">
+              <el-button
+                v-for="shape in basicShapes"
+                :key="shape.type"
+                :type="selectedTool === shape.type ? 'primary' : 'default'"
+                @click="selectTool(shape.type)"
+                :title="shape.name"
+                class="tool-btn">
+                <div class="tool-icon">{{ shape.icon }}</div>
+                <div class="tool-name">{{ shape.name }}</div>
+              </el-button>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="高级形状" name="advanced">
+            <div class="tool-grid">
+              <el-button
+                v-for="shape in advancedShapes"
+                :key="shape.type"
+                :type="selectedTool === shape.type ? 'primary' : 'default'"
+                @click="selectTool(shape.type)"
+                :title="shape.name"
+                class="tool-btn">
+                <div class="tool-icon">{{ shape.icon }}</div>
+                <div class="tool-name">{{ shape.name }}</div>
+              </el-button>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="图形推理" name="reasoning">
+            <div class="reasoning-tools">
+              <div class="reasoning-group">
+                <span class="group-label">图形变换</span>
+                <div class="tool-grid">
+                  <el-button
+                    v-for="transform in transformTools"
+                    :key="transform.type"
+                    @click="applyTransform(transform.type)"
+                    :disabled="!selectedObject"
+                    :title="transform.name"
+                    class="tool-btn">
+                    <div class="tool-icon">{{ transform.icon }}</div>
+                    <div class="tool-name">{{ transform.name }}</div>
+                  </el-button>
+                </div>
+              </div>
+
+              <div class="reasoning-group">
+                <span class="group-label">图形组合</span>
+                <div class="tool-grid">
+                  <el-button
+                    v-for="combo in comboTools"
+                    :key="combo.type"
+                    @click="applyCombo(combo.type)"
+                    :disabled="!canApplyCombo"
+                    :title="combo.name"
+                    class="tool-btn">
+                    <div class="tool-icon">{{ combo.icon }}</div>
+                    <div class="tool-name">{{ combo.name }}</div>
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
-      
-      <div class="tool-group">
-        <span class="group-title">操作</span>
-        <el-button-group>
-          <el-button @click="copySelected" :disabled="!selectedObject" title="复制">
-            <el-icon><CopyDocument /></el-icon>
-          </el-button>
-          <el-button @click="deleteSelected" :disabled="!selectedObject" title="删除">
-            <el-icon><Delete /></el-icon>
-          </el-button>
-          <el-button @click="clearCanvas" title="清空">
-            <el-icon><RefreshLeft /></el-icon>
-          </el-button>
-        </el-button-group>
-      </div>
-      
-      <div class="tool-group">
-        <span class="group-title">图层</span>
-        <el-button-group>
-          <el-button @click="bringToFront" :disabled="!selectedObject" title="置于顶层">
-            <el-icon><Top /></el-icon>
-          </el-button>
-          <el-button @click="sendToBack" :disabled="!selectedObject" title="置于底层">
-            <el-icon><Bottom /></el-icon>
-          </el-button>
-        </el-button-group>
+
+      <div class="toolbar-right">
+        <div class="tool-group">
+          <span class="group-title">操作</span>
+          <el-button-group>
+            <el-button @click="copySelected" :disabled="!selectedObject" title="复制">
+              <el-icon><CopyDocument /></el-icon>
+            </el-button>
+            <el-button @click="deleteSelected" :disabled="!selectedObject" title="删除">
+              <el-icon><Delete /></el-icon>
+            </el-button>
+            <el-button @click="groupObjects" :disabled="!canGroup" title="组合">
+              <el-icon><Connection /></el-icon>
+            </el-button>
+            <el-button @click="ungroupObjects" :disabled="!canUngroup" title="取消组合">
+              <el-icon><Disconnect /></el-icon>
+            </el-button>
+          </el-button-group>
+        </div>
+
+        <div class="tool-group">
+          <span class="group-title">图层</span>
+          <el-button-group>
+            <el-button @click="bringToFront" :disabled="!selectedObject" title="置于顶层">
+              <el-icon><Top /></el-icon>
+            </el-button>
+            <el-button @click="sendToBack" :disabled="!selectedObject" title="置于底层">
+              <el-icon><Bottom /></el-icon>
+            </el-button>
+          </el-button-group>
+        </div>
+
+        <div class="tool-group">
+          <span class="group-title">画布</span>
+          <el-button-group>
+            <el-button @click="zoomIn" title="放大">
+              <el-icon><ZoomIn /></el-icon>
+            </el-button>
+            <el-button @click="zoomOut" title="缩小">
+              <el-icon><ZoomOut /></el-icon>
+            </el-button>
+            <el-button @click="resetZoom" title="重置缩放">
+              <el-icon><FullScreen /></el-icon>
+            </el-button>
+            <el-button @click="clearCanvas" title="清空">
+              <el-icon><RefreshLeft /></el-icon>
+            </el-button>
+          </el-button-group>
+        </div>
       </div>
     </div>
     
@@ -157,16 +236,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, reactive, watch } from 'vue'
+import { ref, onMounted, onUnmounted, reactive, watch, computed } from 'vue'
 import { fabric } from 'fabric'
-import { 
-  CopyDocument, 
-  Delete, 
-  RefreshLeft, 
-  Top, 
+import {
+  CopyDocument,
+  Delete,
+  RefreshLeft,
+  Top,
   Bottom,
   View,
-  Hide
+  Hide,
+  Connection,
+  Disconnect,
+  ZoomIn,
+  ZoomOut,
+  FullScreen
 } from '@element-plus/icons-vue'
 
 // 基础形状定义
@@ -176,17 +260,64 @@ const basicShapes = [
   { type: 'triangle', name: '三角形', icon: '🔺' },
   { type: 'line', name: '直线', icon: '📏' },
   { type: 'arrow', name: '箭头', icon: '➡️' },
-  { type: 'star', name: '星形', icon: '⭐' },
-  { type: 'polygon', name: '多边形', icon: '🔷' },
   { type: 'text', name: '文字', icon: '📝' }
 ]
 
+// 高级形状定义
+const advancedShapes = [
+  { type: 'star', name: '星形', icon: '⭐' },
+  { type: 'polygon', name: '多边形', icon: '🔷' },
+  { type: 'diamond', name: '菱形', icon: '💎' },
+  { type: 'heart', name: '心形', icon: '❤️' },
+  { type: 'cross', name: '十字', icon: '✚' },
+  { type: 'ellipse', name: '椭圆', icon: '🥚' },
+  { type: 'parallelogram', name: '平行四边形', icon: '▱' },
+  { type: 'trapezoid', name: '梯形', icon: '🔶' }
+]
+
+// 图形变换工具
+const transformTools = [
+  { type: 'rotate90', name: '旋转90°', icon: '🔄' },
+  { type: 'rotate180', name: '旋转180°', icon: '🔃' },
+  { type: 'flipH', name: '水平翻转', icon: '↔️' },
+  { type: 'flipV', name: '垂直翻转', icon: '↕️' },
+  { type: 'scale2x', name: '放大2倍', icon: '🔍' },
+  { type: 'scale05x', name: '缩小一半', icon: '🔎' }
+]
+
+// 图形组合工具
+const comboTools = [
+  { type: 'align-left', name: '左对齐', icon: '⬅️' },
+  { type: 'align-center', name: '居中对齐', icon: '↔️' },
+  { type: 'align-right', name: '右对齐', icon: '➡️' },
+  { type: 'align-top', name: '顶部对齐', icon: '⬆️' },
+  { type: 'align-middle', name: '垂直居中', icon: '↕️' },
+  { type: 'align-bottom', name: '底部对齐', icon: '⬇️' },
+  { type: 'distribute-h', name: '水平分布', icon: '⬌' },
+  { type: 'distribute-v', name: '垂直分布', icon: '⬍' }
+]
+
 // 响应式数据
+const activeToolTab = ref('shapes')
 const canvasRef = ref(null)
 const canvas = ref(null)
 const selectedTool = ref('rect')
 const selectedObject = ref(null)
 const layers = ref([])
+const zoomLevel = ref(1)
+
+// 计算属性
+const canGroup = computed(() => {
+  return canvas.value && canvas.value.getActiveObjects().length > 1
+})
+
+const canUngroup = computed(() => {
+  return selectedObject.value && selectedObject.value.type === 'group'
+})
+
+const canApplyCombo = computed(() => {
+  return canvas.value && canvas.value.getActiveObjects().length > 1
+})
 
 // 对象属性
 const objectProps = reactive({
@@ -388,6 +519,78 @@ const createShape = (type, pointer) => {
         fill: '#333333'
       })
       break
+
+    case 'diamond':
+      // 创建菱形路径
+      const diamondPath = 'M 25 0 L 50 25 L 25 50 L 0 25 Z'
+      shape = new fabric.Path(diamondPath, {
+        left: pointer.x - 25,
+        top: pointer.y - 25,
+        fill: '#409eff',
+        stroke: '#333333',
+        strokeWidth: 2
+      })
+      break
+
+    case 'heart':
+      // 创建心形路径
+      const heartPath = 'M 25 45 C 25 45, 10 30, 10 20 C 10 15, 15 10, 20 10 C 22.5 10, 25 12.5, 25 15 C 25 12.5, 27.5 10, 30 10 C 35 10, 40 15, 40 20 C 40 30, 25 45, 25 45 Z'
+      shape = new fabric.Path(heartPath, {
+        left: pointer.x - 25,
+        top: pointer.y - 25,
+        fill: '#f56c6c',
+        stroke: '#333333',
+        strokeWidth: 2
+      })
+      break
+
+    case 'cross':
+      // 创建十字路径
+      const crossPath = 'M 15 0 L 35 0 L 35 15 L 50 15 L 50 35 L 35 35 L 35 50 L 15 50 L 15 35 L 0 35 L 0 15 L 15 15 Z'
+      shape = new fabric.Path(crossPath, {
+        left: pointer.x - 25,
+        top: pointer.y - 25,
+        fill: '#409eff',
+        stroke: '#333333',
+        strokeWidth: 2
+      })
+      break
+
+    case 'ellipse':
+      shape = new fabric.Ellipse({
+        left: pointer.x - 40,
+        top: pointer.y - 25,
+        rx: 40,
+        ry: 25,
+        fill: '#409eff',
+        stroke: '#333333',
+        strokeWidth: 2
+      })
+      break
+
+    case 'parallelogram':
+      // 创建平行四边形路径
+      const parallelogramPath = 'M 15 0 L 50 0 L 35 30 L 0 30 Z'
+      shape = new fabric.Path(parallelogramPath, {
+        left: pointer.x - 25,
+        top: pointer.y - 15,
+        fill: '#409eff',
+        stroke: '#333333',
+        strokeWidth: 2
+      })
+      break
+
+    case 'trapezoid':
+      // 创建梯形路径
+      const trapezoidPath = 'M 10 0 L 40 0 L 50 30 L 0 30 Z'
+      shape = new fabric.Path(trapezoidPath, {
+        left: pointer.x - 25,
+        top: pointer.y - 15,
+        fill: '#409eff',
+        stroke: '#333333',
+        strokeWidth: 2
+      })
+      break
   }
   
   if (shape) {
@@ -470,9 +673,220 @@ const getLayerIcon = (type) => {
     circle: '⭕',
     triangle: '🔺',
     line: '📏',
-    text: '📝'
+    text: '📝',
+    star: '⭐',
+    polygon: '🔷',
+    diamond: '💎',
+    heart: '❤️',
+    cross: '✚',
+    ellipse: '🥚'
   }
   return iconMap[type] || '🔷'
+}
+
+// 应用图形变换
+const applyTransform = (transformType) => {
+  if (!selectedObject.value) return
+
+  const obj = selectedObject.value
+
+  switch (transformType) {
+    case 'rotate90':
+      obj.set('angle', (obj.angle + 90) % 360)
+      break
+    case 'rotate180':
+      obj.set('angle', (obj.angle + 180) % 360)
+      break
+    case 'flipH':
+      obj.set('flipX', !obj.flipX)
+      break
+    case 'flipV':
+      obj.set('flipY', !obj.flipY)
+      break
+    case 'scale2x':
+      obj.set({
+        scaleX: obj.scaleX * 2,
+        scaleY: obj.scaleY * 2
+      })
+      break
+    case 'scale05x':
+      obj.set({
+        scaleX: obj.scaleX * 0.5,
+        scaleY: obj.scaleY * 0.5
+      })
+      break
+  }
+
+  canvas.value.renderAll()
+}
+
+// 应用图形组合操作
+const applyCombo = (comboType) => {
+  const activeObjects = canvas.value.getActiveObjects()
+  if (activeObjects.length < 2) return
+
+  switch (comboType) {
+    case 'align-left':
+      alignObjects('left', activeObjects)
+      break
+    case 'align-center':
+      alignObjects('centerX', activeObjects)
+      break
+    case 'align-right':
+      alignObjects('right', activeObjects)
+      break
+    case 'align-top':
+      alignObjects('top', activeObjects)
+      break
+    case 'align-middle':
+      alignObjects('centerY', activeObjects)
+      break
+    case 'align-bottom':
+      alignObjects('bottom', activeObjects)
+      break
+    case 'distribute-h':
+      distributeObjects('horizontal', activeObjects)
+      break
+    case 'distribute-v':
+      distributeObjects('vertical', activeObjects)
+      break
+  }
+}
+
+// 对齐对象
+const alignObjects = (alignment, objects) => {
+  if (objects.length < 2) return
+
+  const firstObj = objects[0]
+  let referenceValue
+
+  switch (alignment) {
+    case 'left':
+      referenceValue = firstObj.left
+      objects.forEach(obj => obj.set('left', referenceValue))
+      break
+    case 'centerX':
+      referenceValue = firstObj.left + firstObj.width * firstObj.scaleX / 2
+      objects.forEach(obj => {
+        obj.set('left', referenceValue - obj.width * obj.scaleX / 2)
+      })
+      break
+    case 'right':
+      referenceValue = firstObj.left + firstObj.width * firstObj.scaleX
+      objects.forEach(obj => {
+        obj.set('left', referenceValue - obj.width * obj.scaleX)
+      })
+      break
+    case 'top':
+      referenceValue = firstObj.top
+      objects.forEach(obj => obj.set('top', referenceValue))
+      break
+    case 'centerY':
+      referenceValue = firstObj.top + firstObj.height * firstObj.scaleY / 2
+      objects.forEach(obj => {
+        obj.set('top', referenceValue - obj.height * obj.scaleY / 2)
+      })
+      break
+    case 'bottom':
+      referenceValue = firstObj.top + firstObj.height * firstObj.scaleY
+      objects.forEach(obj => {
+        obj.set('top', referenceValue - obj.height * obj.scaleY)
+      })
+      break
+  }
+
+  canvas.value.renderAll()
+}
+
+// 分布对象
+const distributeObjects = (direction, objects) => {
+  if (objects.length < 3) return
+
+  objects.sort((a, b) => {
+    if (direction === 'horizontal') {
+      return a.left - b.left
+    } else {
+      return a.top - b.top
+    }
+  })
+
+  const first = objects[0]
+  const last = objects[objects.length - 1]
+
+  if (direction === 'horizontal') {
+    const totalWidth = last.left - first.left
+    const spacing = totalWidth / (objects.length - 1)
+
+    objects.forEach((obj, index) => {
+      if (index > 0 && index < objects.length - 1) {
+        obj.set('left', first.left + spacing * index)
+      }
+    })
+  } else {
+    const totalHeight = last.top - first.top
+    const spacing = totalHeight / (objects.length - 1)
+
+    objects.forEach((obj, index) => {
+      if (index > 0 && index < objects.length - 1) {
+        obj.set('top', first.top + spacing * index)
+      }
+    })
+  }
+
+  canvas.value.renderAll()
+}
+
+// 组合对象
+const groupObjects = () => {
+  const activeObjects = canvas.value.getActiveObjects()
+  if (activeObjects.length < 2) return
+
+  const group = new fabric.Group(activeObjects, {
+    id: Date.now().toString()
+  })
+
+  canvas.value.discardActiveObject()
+  activeObjects.forEach(obj => canvas.value.remove(obj))
+  canvas.value.add(group)
+  canvas.value.setActiveObject(group)
+}
+
+// 取消组合
+const ungroupObjects = () => {
+  if (!selectedObject.value || selectedObject.value.type !== 'group') return
+
+  const group = selectedObject.value
+  const objects = group.getObjects()
+
+  canvas.value.remove(group)
+
+  objects.forEach(obj => {
+    obj.set({
+      left: obj.left + group.left,
+      top: obj.top + group.top,
+      id: Date.now().toString() + Math.random()
+    })
+    canvas.value.add(obj)
+  })
+
+  canvas.value.renderAll()
+}
+
+// 缩放控制
+const zoomIn = () => {
+  zoomLevel.value = Math.min(zoomLevel.value * 1.2, 5)
+  canvas.value.setZoom(zoomLevel.value)
+}
+
+const zoomOut = () => {
+  zoomLevel.value = Math.max(zoomLevel.value / 1.2, 0.1)
+  canvas.value.setZoom(zoomLevel.value)
+}
+
+const resetZoom = () => {
+  zoomLevel.value = 1
+  canvas.value.setZoom(1)
+  canvas.value.viewportTransform = [1, 0, 0, 1, 0, 0]
 }
 
 // 生命周期
@@ -506,22 +920,85 @@ defineExpose({
 
 .toolbar {
   display: flex;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-start;
   padding: 15px 20px;
   background: #f8f9fa;
   border-bottom: 1px solid #e9ecef;
-  flex-wrap: wrap;
-  
-  .tool-group {
+
+  .toolbar-left {
+    flex: 1;
+
+    :deep(.el-tabs__header) {
+      margin-bottom: 10px;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 8px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding: 8px;
+
+      .tool-btn {
+        height: 60px;
+        flex-direction: column;
+        padding: 8px;
+
+        .tool-icon {
+          font-size: 20px;
+          margin-bottom: 4px;
+        }
+
+        .tool-name {
+          font-size: 11px;
+          line-height: 1.2;
+        }
+      }
+    }
+
+    .reasoning-tools {
+      .reasoning-group {
+        margin-bottom: 16px;
+
+        .group-label {
+          display: block;
+          font-size: 12px;
+          color: #666;
+          font-weight: 500;
+          margin-bottom: 8px;
+          padding-left: 8px;
+        }
+
+        .tool-grid {
+          grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+          max-height: 120px;
+
+          .tool-btn {
+            height: 50px;
+          }
+        }
+      }
+    }
+  }
+
+  .toolbar-right {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    
-    .group-title {
-      font-size: 12px;
-      color: #666;
-      font-weight: 500;
-      min-width: 60px;
+    gap: 16px;
+    margin-left: 20px;
+
+    .tool-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+
+      .group-title {
+        font-size: 11px;
+        color: #666;
+        font-weight: 500;
+      }
     }
   }
 }
