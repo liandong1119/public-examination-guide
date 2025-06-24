@@ -340,7 +340,7 @@ export class VitePressAPI {
   // 获取所有文档列表
   static async getDocumentList() {
     try {
-      const response = await request.get(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENTS}`)
+      const response = await request.get(`http://localhost:3001/api${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENTS}`)
       return response.data
     } catch (error) {
       return {
@@ -353,7 +353,7 @@ export class VitePressAPI {
   // 获取文档内容
   static async getDocument(path) {
     try {
-      const response = await request.get(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENT}`, { path })
+      const response = await request.get(`http://localhost:3001/api${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENT}`, { path })
       return response.data
     } catch (error) {
       return {
@@ -366,7 +366,7 @@ export class VitePressAPI {
   // 保存文档内容
   static async saveDocument(path, content, title) {
     try {
-      const response = await request.put(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENTS}`, {
+      const response = await request.put(`http://localhost:3001/api${API_CONFIG.ENDPOINTS.VITEPRESS.DOCUMENTS}`, {
         path,
         content,
         title
@@ -383,9 +383,19 @@ export class VitePressAPI {
   // 获取文件树
   static async getFileTree() {
     try {
-      const response = await request.get(`${API_BASE}${API_CONFIG.ENDPOINTS.VITEPRESS.TREE}`)
+      // 直接使用后端API地址，绕过代理问题
+      const apiUrl = `http://localhost:3001/api${API_CONFIG.ENDPOINTS.VITEPRESS.TREE}`
+      console.log('直接调用后端API:', apiUrl)
+
+      const response = await request.get(apiUrl)
+      console.log('request.get API响应:', response)
+
+      // request.get 返回的是 { success: true, data: ... }
+      // 而后端API返回的是 { success: true, data: ... }
+      // 所以我们需要返回 response.data，它包含后端的完整响应
       return response.data
     } catch (error) {
+      console.error('获取文件树失败:', error)
       return {
         success: false,
         error: error.message

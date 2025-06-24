@@ -56,7 +56,7 @@
 
       <div class="toolbar-center">
         <!-- 视图模式 -->
-        <div class="view-mode-switcher">
+        <div class="view-mode-switcher" v-if="enableMarkdownPreview">
           <button
             v-for="mode in viewModes"
             :key="mode.key"
@@ -99,16 +99,16 @@
     <!-- Monaco编辑器容器 -->
     <div class="editor-container" :class="{ 'split-view': currentViewMode === 'split' }">
       <!-- 编辑器面板 -->
-      <div 
-        v-show="currentViewMode !== 'preview'" 
+      <div
+        v-show="currentViewMode !== 'preview'"
         class="editor-panel"
-        :class="{ 'half-width': currentViewMode === 'split' }">
+        :class="{ 'half-width': currentViewMode === 'split' && enableMarkdownPreview }">
         <div ref="monacoContainer" class="monaco-container"></div>
       </div>
 
       <!-- 预览面板 -->
-      <div 
-        v-show="currentViewMode !== 'edit'" 
+      <div
+        v-show="currentViewMode !== 'edit' && enableMarkdownPreview"
         class="preview-panel"
         :class="{ 'half-width': currentViewMode === 'split' }">
         <div class="preview-header">
@@ -259,7 +259,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['update:modelValue', 'save', 'change', 'cursor-position-change'])
+const emit = defineEmits(['update:modelValue', 'save', 'change', 'cursor-position-change', 'scroll-change'])
 
 // 响应式数据
 const monacoContainer = ref(null)
@@ -385,6 +385,19 @@ const initMonacoEditor = async () => {
   if (!monacoContainer.value) return
 
   try {
+    // 配置Monaco Environment以解决Web Worker问题
+    window.MonacoEnvironment = {
+      getWorker: function (workerId, label) {
+        // 禁用Web Worker，在主线程中运行
+        return {
+          postMessage: function() {},
+          addEventListener: function() {},
+          removeEventListener: function() {},
+          terminate: function() {}
+        }
+      }
+    }
+
     // 创建Monaco编辑器实例
     monacoEditor = monaco.editor.create(monacoContainer.value, {
       value: props.modelValue || '',
@@ -435,6 +448,19 @@ const initMonacoEditor = async () => {
       }
       cursorPosition.value = position
       emit('cursor-position-change', position)
+    })
+
+    // 监听滚动变化
+    monacoEditor.onDidScrollChange((e) => {
+      const scrollData = {
+        scrollTop: e.scrollTop,
+        scrollLeft: e.scrollLeft,
+        scrollHeight: monacoEditor.getScrollHeight(),
+        scrollWidth: monacoEditor.getScrollWidth(),
+        clientHeight: monacoEditor.getLayoutInfo().height,
+        clientWidth: monacoEditor.getLayoutInfo().width
+      }
+      emit('scroll-change', scrollData)
     })
 
     // 注册自定义快捷键

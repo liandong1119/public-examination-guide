@@ -124,7 +124,7 @@
     </div>
 
     <!-- 浮动检查状态 -->
-    <div v-if="showFloatingStatus" class="floating-status">
+    <div v-if="localShowFloatingStatus" class="floating-status">
       <div class="status-content">
         <div class="status-icon" :class="getOverallStatus()">
           {{ getStatusIcon() }}
@@ -134,11 +134,11 @@
           <div class="status-details">{{ getStatusDetails() }}</div>
         </div>
       </div>
-      <button @click="showFloatingStatus = false" class="close-btn">×</button>
+      <button @click="localShowFloatingStatus = false" class="close-btn">×</button>
     </div>
 
     <!-- 行内错误提示 -->
-    <div v-if="showInlineErrors" class="inline-errors">
+    <div v-if="localShowInlineErrors" class="inline-errors">
       <!-- 这里会动态插入行内错误提示 -->
     </div>
   </div>
@@ -179,6 +179,8 @@ const checkLevel = ref('standard')
 const activeFilter = ref('all')
 const issues = ref([])
 const ignoredIssues = ref(new Set())
+const localShowFloatingStatus = ref(props.showFloatingStatus)
+const localShowInlineErrors = ref(props.showInlineErrors)
 
 // 检查规则配置
 const checkRules = ref([

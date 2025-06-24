@@ -2,44 +2,89 @@
   <div class="formula-editor">
     <!-- 工具栏 -->
     <div class="toolbar">
-      <div class="tool-group">
-        <span class="group-title">基础符号</span>
-        <el-button-group>
-          <el-button 
-            v-for="symbol in basicSymbols" 
-            :key="symbol.latex"
-            size="small"
-            @click="insertSymbol(symbol.latex)"
-            :title="symbol.name">
-            {{ symbol.display }}
-          </el-button>
-        </el-button-group>
+      <div class="toolbar-left">
+        <el-tabs v-model="activeSymbolTab" type="card" size="small">
+          <el-tab-pane label="基础" name="basic">
+            <div class="symbol-grid">
+              <el-button
+                v-for="symbol in basicSymbols"
+                :key="symbol.latex"
+                size="small"
+                @click="insertSymbol(symbol.latex)"
+                :title="symbol.name">
+                {{ symbol.display }}
+              </el-button>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="运算符" name="operators">
+            <div class="symbol-grid">
+              <el-button
+                v-for="op in operators"
+                :key="op.latex"
+                size="small"
+                @click="insertSymbol(op.latex)"
+                :title="op.name">
+                {{ op.display }}
+              </el-button>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="函数" name="functions">
+            <div class="symbol-grid">
+              <el-button
+                v-for="func in functions"
+                :key="func.latex"
+                size="small"
+                @click="insertFunction(func.latex)"
+                :title="func.name">
+                {{ func.display }}
+              </el-button>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="希腊字母" name="greek">
+            <div class="symbol-grid">
+              <el-button
+                v-for="letter in greekLetters"
+                :key="letter.latex"
+                size="small"
+                @click="insertSymbol(letter.latex)"
+                :title="letter.name">
+                {{ letter.display }}
+              </el-button>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="模板" name="templates">
+            <div class="template-grid">
+              <div
+                v-for="template in formulaTemplates"
+                :key="template.name"
+                class="template-item"
+                @click="insertTemplate(template)"
+                :title="template.description">
+                <div class="template-preview" v-html="renderFormula(template.latex)"></div>
+                <div class="template-name">{{ template.name }}</div>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
-      
-      <div class="tool-group">
-        <span class="group-title">运算符</span>
+
+      <div class="toolbar-right">
         <el-button-group>
-          <el-button 
-            v-for="op in operators" 
-            :key="op.latex"
-            size="small"
-            @click="insertSymbol(op.latex)"
-            :title="op.name">
-            {{ op.display }}
+          <el-button size="small" @click="showLatexHelp">
+            <el-icon><QuestionFilled /></el-icon>
+            语法帮助
           </el-button>
-        </el-button-group>
-      </div>
-      
-      <div class="tool-group">
-        <span class="group-title">函数</span>
-        <el-button-group>
-          <el-button 
-            v-for="func in functions" 
-            :key="func.latex"
-            size="small"
-            @click="insertFunction(func.latex)"
-            :title="func.name">
-            {{ func.display }}
+          <el-button size="small" @click="clearCurrentStep">
+            <el-icon><Delete /></el-icon>
+            清空
+          </el-button>
+          <el-button size="small" @click="formatLatex">
+            <el-icon><Magic /></el-icon>
+            格式化
           </el-button>
         </el-button-group>
       </div>
@@ -149,6 +194,144 @@
         </div>
       </div>
     </div>
+
+    <!-- LaTeX语法帮助对话框 -->
+    <el-dialog v-model="showHelpDialog" title="📚 LaTeX语法帮助" width="70%" top="5vh">
+      <div class="latex-help">
+        <el-tabs type="border-card">
+          <el-tab-pane label="基础语法" name="basic">
+            <div class="help-section">
+              <h4>基本结构</h4>
+              <div class="help-item">
+                <code>x^{2}</code> → <span v-html="renderFormula('x^{2}')"></span>
+                <span class="help-desc">上标</span>
+              </div>
+              <div class="help-item">
+                <code>x_{n}</code> → <span v-html="renderFormula('x_{n}')"></span>
+                <span class="help-desc">下标</span>
+              </div>
+              <div class="help-item">
+                <code>\frac{a}{b}</code> → <span v-html="renderFormula('\\frac{a}{b}')"></span>
+                <span class="help-desc">分数</span>
+              </div>
+              <div class="help-item">
+                <code>\sqrt{x}</code> → <span v-html="renderFormula('\\sqrt{x}')"></span>
+                <span class="help-desc">平方根</span>
+              </div>
+              <div class="help-item">
+                <code>\sqrt[n]{x}</code> → <span v-html="renderFormula('\\sqrt[n]{x}')"></span>
+                <span class="help-desc">n次根</span>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="运算符号" name="operators">
+            <div class="help-section">
+              <h4>常用运算符</h4>
+              <div class="help-grid">
+                <div class="help-item">
+                  <code>\times</code> → <span v-html="renderFormula('\\times')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\div</code> → <span v-html="renderFormula('\\div')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\pm</code> → <span v-html="renderFormula('\\pm')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\mp</code> → <span v-html="renderFormula('\\mp')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\leq</code> → <span v-html="renderFormula('\\leq')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\geq</code> → <span v-html="renderFormula('\\geq')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\neq</code> → <span v-html="renderFormula('\\neq')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\approx</code> → <span v-html="renderFormula('\\approx')"></span>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="函数" name="functions">
+            <div class="help-section">
+              <h4>数学函数</h4>
+              <div class="help-grid">
+                <div class="help-item">
+                  <code>\sin(x)</code> → <span v-html="renderFormula('\\sin(x)')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\cos(x)</code> → <span v-html="renderFormula('\\cos(x)')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\tan(x)</code> → <span v-html="renderFormula('\\tan(x)')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\log(x)</code> → <span v-html="renderFormula('\\log(x)')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\ln(x)</code> → <span v-html="renderFormula('\\ln(x)')"></span>
+                </div>
+                <div class="help-item">
+                  <code>\exp(x)</code> → <span v-html="renderFormula('\\exp(x)')"></span>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="积分求和" name="calculus">
+            <div class="help-section">
+              <h4>微积分符号</h4>
+              <div class="help-item">
+                <code>\sum_{i=1}^{n} x_i</code> → <span v-html="renderFormula('\\sum_{i=1}^{n} x_i')"></span>
+                <span class="help-desc">求和</span>
+              </div>
+              <div class="help-item">
+                <code>\prod_{i=1}^{n} x_i</code> → <span v-html="renderFormula('\\prod_{i=1}^{n} x_i')"></span>
+                <span class="help-desc">连乘</span>
+              </div>
+              <div class="help-item">
+                <code>\int_{a}^{b} f(x) dx</code> → <span v-html="renderFormula('\\int_{a}^{b} f(x) dx')"></span>
+                <span class="help-desc">定积分</span>
+              </div>
+              <div class="help-item">
+                <code>\lim_{x \to \infty} f(x)</code> → <span v-html="renderFormula('\\lim_{x \\to \\infty} f(x)')"></span>
+                <span class="help-desc">极限</span>
+              </div>
+              <div class="help-item">
+                <code>\frac{\partial f}{\partial x}</code> → <span v-html="renderFormula('\\frac{\\partial f}{\\partial x}')"></span>
+                <span class="help-desc">偏导数</span>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <el-tab-pane label="矩阵" name="matrix">
+            <div class="help-section">
+              <h4>矩阵和向量</h4>
+              <div class="help-item">
+                <code>\begin{pmatrix} a & b \\ c & d \end{pmatrix}</code>
+                <div class="matrix-preview" v-html="renderFormula('\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}')"></div>
+                <span class="help-desc">圆括号矩阵</span>
+              </div>
+              <div class="help-item">
+                <code>\begin{bmatrix} a & b \\ c & d \end{bmatrix}</code>
+                <div class="matrix-preview" v-html="renderFormula('\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}')"></div>
+                <span class="help-desc">方括号矩阵</span>
+              </div>
+              <div class="help-item">
+                <code>\begin{vmatrix} a & b \\ c & d \end{vmatrix}</code>
+                <div class="matrix-preview" v-html="renderFormula('\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}')"></div>
+                <span class="help-desc">行列式</span>
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -156,12 +339,14 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import * as monaco from 'monaco-editor'
 import katex from 'katex'
-import { 
-  Plus, 
-  CopyDocument, 
-  Delete, 
-  ArrowLeft, 
-  ArrowRight 
+import {
+  Plus,
+  CopyDocument,
+  Delete,
+  ArrowLeft,
+  ArrowRight,
+  QuestionFilled,
+  Magic
 } from '@element-plus/icons-vue'
 
 // 符号定义
@@ -195,10 +380,89 @@ const functions = [
   { name: '正切', latex: '\\tan(x)', display: 'tan' },
   { name: '对数', latex: '\\log(x)', display: 'log' },
   { name: '自然对数', latex: '\\ln(x)', display: 'ln' },
-  { name: '指数', latex: 'e^{x}', display: 'eˣ' }
+  { name: '指数', latex: 'e^{x}', display: 'eˣ' },
+  { name: '反正弦', latex: '\\arcsin(x)', display: 'arcsin' },
+  { name: '反余弦', latex: '\\arccos(x)', display: 'arccos' },
+  { name: '反正切', latex: '\\arctan(x)', display: 'arctan' },
+  { name: '双曲正弦', latex: '\\sinh(x)', display: 'sinh' },
+  { name: '双曲余弦', latex: '\\cosh(x)', display: 'cosh' },
+  { name: '双曲正切', latex: '\\tanh(x)', display: 'tanh' }
+]
+
+// 希腊字母
+const greekLetters = [
+  { name: 'Alpha', latex: '\\alpha', display: 'α' },
+  { name: 'Beta', latex: '\\beta', display: 'β' },
+  { name: 'Gamma', latex: '\\gamma', display: 'γ' },
+  { name: 'Delta', latex: '\\delta', display: 'δ' },
+  { name: 'Epsilon', latex: '\\epsilon', display: 'ε' },
+  { name: 'Zeta', latex: '\\zeta', display: 'ζ' },
+  { name: 'Eta', latex: '\\eta', display: 'η' },
+  { name: 'Theta', latex: '\\theta', display: 'θ' },
+  { name: 'Iota', latex: '\\iota', display: 'ι' },
+  { name: 'Kappa', latex: '\\kappa', display: 'κ' },
+  { name: 'Lambda', latex: '\\lambda', display: 'λ' },
+  { name: 'Mu', latex: '\\mu', display: 'μ' },
+  { name: 'Nu', latex: '\\nu', display: 'ν' },
+  { name: 'Xi', latex: '\\xi', display: 'ξ' },
+  { name: 'Pi', latex: '\\pi', display: 'π' },
+  { name: 'Rho', latex: '\\rho', display: 'ρ' },
+  { name: 'Sigma', latex: '\\sigma', display: 'σ' },
+  { name: 'Tau', latex: '\\tau', display: 'τ' },
+  { name: 'Phi', latex: '\\phi', display: 'φ' },
+  { name: 'Chi', latex: '\\chi', display: 'χ' },
+  { name: 'Psi', latex: '\\psi', display: 'ψ' },
+  { name: 'Omega', latex: '\\omega', display: 'ω' }
+]
+
+// 公式模板
+const formulaTemplates = [
+  {
+    name: '二次公式',
+    latex: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+    description: '一元二次方程求根公式'
+  },
+  {
+    name: '勾股定理',
+    latex: 'a^2 + b^2 = c^2',
+    description: '直角三角形勾股定理'
+  },
+  {
+    name: '欧拉公式',
+    latex: 'e^{i\\pi} + 1 = 0',
+    description: '欧拉恒等式'
+  },
+  {
+    name: '导数定义',
+    latex: 'f\'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}',
+    description: '函数导数的定义'
+  },
+  {
+    name: '积分公式',
+    latex: '\\int_a^b f(x) dx = F(b) - F(a)',
+    description: '定积分基本定理'
+  },
+  {
+    name: '泰勒展开',
+    latex: 'f(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(a)}{n!}(x-a)^n',
+    description: '泰勒级数展开'
+  },
+  {
+    name: '正态分布',
+    latex: 'f(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}} e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}',
+    description: '正态分布概率密度函数'
+  },
+  {
+    name: '矩阵乘法',
+    latex: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} e & f \\\\ g & h \\end{pmatrix} = \\begin{pmatrix} ae+bg & af+bh \\\\ ce+dg & cf+dh \\end{pmatrix}',
+    description: '2x2矩阵乘法'
+  }
 ]
 
 // 响应式数据
+const activeSymbolTab = ref('basic')
+const showHelpDialog = ref(false)
+
 const formulaConfig = reactive({
   title: '公式推导示例'
 })
@@ -314,6 +578,46 @@ const removeStep = (index) => {
   }
 }
 
+// 插入模板
+const insertTemplate = (template) => {
+  if (monacoEditor.value) {
+    const selection = monacoEditor.value.getSelection()
+    monacoEditor.value.executeEdits('', [{
+      range: selection,
+      text: template.latex
+    }])
+    monacoEditor.value.focus()
+  }
+}
+
+// 清空当前步骤
+const clearCurrentStep = () => {
+  if (monacoEditor.value) {
+    monacoEditor.value.setValue('')
+  }
+  if (formulaSteps.value[selectedStepIndex.value]) {
+    formulaSteps.value[selectedStepIndex.value].formula = ''
+  }
+}
+
+// 格式化LaTeX
+const formatLatex = () => {
+  if (monacoEditor.value) {
+    let content = monacoEditor.value.getValue()
+    // 简单的格式化：添加适当的空格
+    content = content
+      .replace(/([+\-=])/g, ' $1 ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    monacoEditor.value.setValue(content)
+  }
+}
+
+// 显示LaTeX帮助
+const showLatexHelp = () => {
+  showHelpDialog.value = true
+}
+
 // 更新预览
 const updatePreview = () => {
   // 预览更新逻辑
@@ -356,23 +660,78 @@ defineExpose({
 
 .toolbar {
   display: flex;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-start;
   padding: 15px 20px;
   background: #f8f9fa;
   border-bottom: 1px solid #e9ecef;
-  flex-wrap: wrap;
-  
-  .tool-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    
-    .group-title {
-      font-size: 12px;
-      color: #666;
-      font-weight: 500;
-      min-width: 60px;
+
+  .toolbar-left {
+    flex: 1;
+
+    :deep(.el-tabs__header) {
+      margin-bottom: 10px;
     }
+
+    .symbol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 4px;
+      max-height: 120px;
+      overflow-y: auto;
+      padding: 8px;
+
+      .el-button {
+        min-width: 36px;
+        height: 36px;
+        padding: 0;
+        font-size: 16px;
+      }
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 8px;
+
+      .template-item {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+
+        &:hover {
+          border-color: #409eff;
+          background: rgba(64, 158, 255, 0.05);
+        }
+
+        .template-preview {
+          margin-bottom: 4px;
+          min-height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          :deep(.katex) {
+            font-size: 12px;
+          }
+        }
+
+        .template-name {
+          font-size: 11px;
+          color: #666;
+        }
+      }
+    }
+  }
+
+  .toolbar-right {
+    margin-left: 20px;
   }
 }
 
@@ -527,5 +886,116 @@ defineExpose({
 .formula-error {
   color: #f56c6c;
   font-style: italic;
+}
+
+// LaTeX帮助对话框样式
+.latex-help {
+  .help-section {
+    padding: 16px;
+
+    h4 {
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 16px;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 8px;
+    }
+
+    .help-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+
+      code {
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        min-width: 120px;
+        color: #d63384;
+      }
+
+      .help-desc {
+        color: #666;
+        font-size: 12px;
+        margin-left: auto;
+      }
+
+      .matrix-preview {
+        margin: 8px 0;
+      }
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+
+      .help-item {
+        margin-bottom: 8px;
+
+        code {
+          min-width: 80px;
+        }
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 1200px) {
+  .toolbar {
+    flex-direction: column;
+    gap: 16px;
+
+    .toolbar-right {
+      margin-left: 0;
+      align-self: flex-end;
+    }
+  }
+
+  .editor-container {
+    flex-direction: column;
+  }
+
+  .preview-panel {
+    width: 100%;
+    height: 300px;
+    border-left: none;
+    border-top: 1px solid #e9ecef;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    .symbol-grid {
+      grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+
+      .el-button {
+        min-width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+    }
+
+    .template-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .step-item {
+    flex-direction: column;
+    gap: 12px;
+
+    .step-actions {
+      flex-direction: row;
+      justify-content: center;
+    }
+  }
 }
 </style>

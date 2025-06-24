@@ -431,11 +431,12 @@ const printPreview = () => {
 
 const handleScroll = (event) => {
   if (enableSyncScroll.value) {
-    emit('scroll', {
+    const scrollData = {
       scrollTop: event.target.scrollTop,
       scrollHeight: event.target.scrollHeight,
       clientHeight: event.target.clientHeight
-    })
+    }
+    emit('scroll', scrollData)
   }
 
   updateActiveTocItem()
@@ -569,6 +570,7 @@ defineExpose({
   border-radius: 8px;
   overflow: hidden;
   position: relative;
+  min-height: 0; // 确保flex子元素可以正确收缩
 
   .preview-header {
     padding: 16px 20px;
@@ -617,6 +619,9 @@ defineExpose({
     overflow-y: auto;
     position: relative;
     background: white;
+    min-height: 0; // 确保flex子元素可以正确收缩
+    max-height: calc(100vh - 200px); // 动态计算最大高度
+    height: calc(100vh - 200px); // 动态计算高度
 
     &.no-header {
       border-radius: 8px;
