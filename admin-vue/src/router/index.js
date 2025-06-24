@@ -12,40 +12,16 @@ const routes = [
     meta: { title: '仪表盘' }
   },
   {
-    path: '/editor',
-    name: 'SimpleEditor',
-    component: () => import('@/views/SimpleEditor.vue'),
-    meta: { title: '文档编辑器' }
-  },
-  {
     path: '/visual-editor',
     name: 'VisualEditor',
     component: () => import('@/views/VisualEditor.vue'),
     meta: { title: '可视化编辑器' }
   },
   {
-    path: '/vitepress',
-    name: 'CleanVitePress',
-    component: () => import('@/views/CleanVitePress.vue'),
-    meta: { title: 'VitePress管理' }
-  },
-  {
-    path: '/vitepress-editor',
-    name: 'OptimizedVitePressEditor',
-    component: () => import('@/views/OptimizedVitePressEditor.vue'),
-    meta: { title: 'VitePress编辑器' }
-  },
-  {
-    path: '/simple-vitepress',
-    name: 'SimpleVitePress',
-    component: () => import('@/views/SimpleVitePress.vue'),
-    meta: { title: 'VitePress文档管理' }
-  },
-  {
-    path: '/simple-vitepress-clean',
-    name: 'SimpleVitePressClean',
-    component: () => import('@/views/SimpleVitePressClean.vue'),
-    meta: { title: '高级编辑器（优化版）' }
+    path: '/powerful-editor',
+    name: 'PowerfulVitePressEditor',
+    component: () => import('@/views/PowerfulVitePressEditor.vue'),
+    meta: { title: '强化版VitePress编辑器' }
   },
   {
     path: '/file-manager',
@@ -64,24 +40,6 @@ const routes = [
     name: 'ComponentManager',
     component: () => import('@/views/ComponentManager.vue'),
     meta: { title: '组件管理' }
-  },
-  {
-    path: '/dynamic-component-editor',
-    name: 'DynamicComponentEditor',
-    component: () => import('@/views/DynamicComponentEditor.vue'),
-    meta: { title: '动态组件编辑器' }
-  },
-  {
-    path: '/editor-comparison',
-    name: 'EditorComparison',
-    component: () => import('@/views/EditorComparison.vue'),
-    meta: { title: '编辑器对比' }
-  },
-  {
-    path: '/powerful-editor',
-    name: 'PowerfulVitePressEditor',
-    component: () => import('@/views/PowerfulVitePressEditor.vue'),
-    meta: { title: '强化版VitePress编辑器' }
   }
 ]
 
