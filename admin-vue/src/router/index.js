@@ -31,8 +31,8 @@ const routes = [
   },
   {
     path: '/settings',
-    name: 'Settings',
-    component: () => import('@/views/Settings.vue'),
+    name: 'SystemSettings',
+    component: () => import('@/views/SystemSettings.vue'),
     meta: { title: '系统设置' }
   },
   {

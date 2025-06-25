@@ -150,34 +150,9 @@
         </div>
 
         <div class="header-right">
-          <el-tooltip content="通知消息" placement="bottom">
-            <el-button link class="notification-btn">
-              <el-icon><Bell /></el-icon>
-              <el-badge :value="newNotifications" :hidden="newNotifications === 0" class="notification-badge" />
-            </el-button>
-          </el-tooltip>
+          <NotificationCenter ref="notificationCenter" />
 
-          <el-dropdown @command="handleUserCommand">
-            <div class="user-info">
-              <el-avatar size="small" class="user-avatar">
-                <el-icon><User /></el-icon>
-              </el-avatar>
-              <span class="user-name">管理员</span>
-              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="profile">
-                  <el-icon><User /></el-icon>
-                  个人资料
-                </el-dropdown-item>
-                <el-dropdown-item command="logout" divided>
-                  <el-icon><SwitchButton /></el-icon>
-                  退出登录
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <UserProfile />
         </div>
       </header>
       
@@ -201,38 +176,23 @@ import {
   Setting,
   Expand,
   Fold,
-  Bell,
-  User,
   Document,
   Sunny,
   Moon,
-  QuestionFilled,
-  ArrowDown,
-  SwitchButton
+  QuestionFilled
 } from '@element-plus/icons-vue'
+import NotificationCenter from '@/components/NotificationCenter.vue'
+import UserProfile from '@/components/UserProfile.vue'
 
 // 响应式数据
 const sidebarCollapsed = ref(false)
 const isDark = ref(false)
-const newNotifications = ref(3)
 const hasFileUpdates = ref(true)
+const notificationCenter = ref(null)
 
 // 切换侧边栏
 const toggleSidebar = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value
-}
-
-// 用户操作处理
-const handleUserCommand = (command) => {
-  switch (command) {
-    case 'profile':
-      ElMessage.info('个人资料功能开发中...')
-      break
-    case 'logout':
-      ElMessage.success('已退出登录')
-      // 这里可以添加登出逻辑
-      break
-  }
 }
 
 // 主题切换
