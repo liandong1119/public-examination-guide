@@ -85,7 +85,7 @@
         <div class="chart-card">
           <div class="chart-header">
             <h3>📊 文档分类统计</h3>
-            <el-button size="small" text @click="refreshCategoryData">
+            <el-button size="small" link @click="refreshCategoryData">
               <el-icon><Refresh /></el-icon>
             </el-button>
           </div>
@@ -174,7 +174,7 @@
         <div class="recent-docs">
           <div class="section-header">
             <h3>📄 最近更新的文档</h3>
-            <el-button size="small" text @click="refreshRecentDocs">
+            <el-button size="small" link @click="refreshRecentDocs">
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -203,7 +203,7 @@
             </el-table-column>
             <el-table-column label="操作" width="120">
               <template #default="scope">
-                <el-button size="small" text @click="editDoc(scope.row)">
+                <el-button size="small" link @click="editDoc(scope.row)">
                   <el-icon><Edit /></el-icon>
                   编辑
                 </el-button>

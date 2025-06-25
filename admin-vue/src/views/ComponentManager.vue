@@ -89,7 +89,7 @@
                 <span class="type-name">{{ getTypeName(component.type) }}</span>
               </div>
               <el-dropdown @command="handleCardAction">
-                <el-button type="text" size="small">
+                <el-button type="primary" link size="small">
                   <el-icon><MoreFilled /></el-icon>
                 </el-button>
                 <template #dropdown>

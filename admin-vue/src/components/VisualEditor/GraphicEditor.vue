@@ -86,7 +86,7 @@
               <el-icon><Connection /></el-icon>
             </el-button>
             <el-button @click="ungroupObjects" :disabled="!canUngroup" title="取消组合">
-              <el-icon><Disconnect /></el-icon>
+              <el-icon><Remove /></el-icon>
             </el-button>
           </el-button-group>
         </div>
@@ -247,7 +247,7 @@ import {
   View,
   Hide,
   Connection,
-  Disconnect,
+  Remove,
   ZoomIn,
   ZoomOut,
   FullScreen

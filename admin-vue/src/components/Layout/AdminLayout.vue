@@ -8,41 +8,17 @@
           <div class="logo-icon">
             <span>🏛️</span>
           </div>
-          <div class="logo-text" v-if="!sidebarCollapsed">
+          <div class="logo-text" v-show="!sidebarCollapsed">
             <h2>朝闻阁</h2>
             <span class="logo-subtitle">后台管理系统</span>
           </div>
-        </div>
-
-        <!-- 用户信息 -->
-        <div class="user-info" v-if="!sidebarCollapsed">
-          <div class="user-avatar">
-            <el-avatar :size="32">
-              <el-icon><User /></el-icon>
-            </el-avatar>
-          </div>
-          <div class="user-details">
-            <div class="user-name">管理员</div>
-            <div class="user-role">系统管理员</div>
-          </div>
-          <el-dropdown trigger="click" @command="handleUserCommand">
-            <el-button text size="small">
-              <el-icon><MoreFilled /></el-icon>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人资料</el-dropdown-item>
-                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
         </div>
       </div>
 
       <!-- 导航菜单 -->
       <nav class="nav-menu">
         <div class="menu-section">
-          <div class="section-title" v-if="!sidebarCollapsed">主要功能</div>
+          <div class="section-title" v-show="!sidebarCollapsed">概览</div>
           <el-menu
             :default-active="$route.path"
             :collapse="sidebarCollapsed"
@@ -55,43 +31,59 @@
             <el-menu-item index="/dashboard" class="menu-item-enhanced">
               <el-icon><DataBoard /></el-icon>
               <span>仪表盘</span>
-              <el-badge :value="newNotifications" :hidden="newNotifications === 0" class="menu-badge" />
-            </el-menu-item>
-
-            <el-sub-menu index="/editor-group" class="submenu-enhanced">
-              <template #title>
-                <el-icon><EditPen /></el-icon>
-                <span>编辑器</span>
-                <el-tag size="small" type="success" v-if="!sidebarCollapsed">2</el-tag>
-              </template>
-              <el-menu-item index="/powerful-editor">
-                <el-icon><Star /></el-icon>
-                <span>强化版编辑器</span>
-                <el-tag size="small" type="warning" v-if="!sidebarCollapsed">HOT</el-tag>
-              </el-menu-item>
-              <el-menu-item index="/visual-editor">
-                <el-icon><Brush /></el-icon>
-                <span>可视化编辑器</span>
-                <el-tag size="small" type="primary" v-if="!sidebarCollapsed">NEW</el-tag>
-              </el-menu-item>
-            </el-sub-menu>
-
-            <el-menu-item index="/file-manager" class="menu-item-enhanced">
-              <el-icon><FolderOpened /></el-icon>
-              <span>文件管理</span>
-              <div class="menu-indicator" v-if="hasFileUpdates"></div>
-            </el-menu-item>
-
-            <el-menu-item index="/component-manager" class="menu-item-enhanced">
-              <el-icon><Grid /></el-icon>
-              <span>组件管理</span>
-              <el-badge :value="componentCount" :max="99" class="menu-badge" />
+              <div class="menu-status-dot" v-if="newNotifications > 0"></div>
             </el-menu-item>
           </el-menu>
         </div>
 
         <div class="menu-section">
-          <div class="section-title" v-if="!sidebarCollapsed">系统管理</div>
+          <div class="section-title" v-show="!sidebarCollapsed">编辑</div>
+          <el-menu
+            :default-active="$route.path"
+            :collapse="sidebarCollapsed"
+            :unique-opened="true"
+            router
+            background-color="transparent"
+            text-color="#64748b"
+            active-text-color="#2563eb">
+
+            <el-menu-item index="/powerful-editor" class="menu-item-enhanced">
+              <el-icon><EditPen /></el-icon>
+              <span>文档编辑器</span>
+            </el-menu-item>
+
+            <el-menu-item index="/visual-editor" class="menu-item-enhanced">
+              <el-icon><Brush /></el-icon>
+              <span>可视化编辑</span>
+            </el-menu-item>
+          </el-menu>
+        </div>
+
+        <div class="menu-section">
+          <div class="section-title" v-show="!sidebarCollapsed">管理</div>
+          <el-menu
+            :default-active="$route.path"
+            :collapse="sidebarCollapsed"
+            router
+            background-color="transparent"
+            text-color="#64748b"
+            active-text-color="#2563eb">
+
+            <el-menu-item index="/file-manager" class="menu-item-enhanced">
+              <el-icon><FolderOpened /></el-icon>
+              <span>文件管理</span>
+              <div class="menu-status-dot" v-if="hasFileUpdates"></div>
+            </el-menu-item>
+
+            <el-menu-item index="/component-manager" class="menu-item-enhanced">
+              <el-icon><Grid /></el-icon>
+              <span>组件库</span>
+            </el-menu-item>
+          </el-menu>
+        </div>
+
+        <div class="menu-section">
+          <div class="section-title" v-show="!sidebarCollapsed">系统</div>
           <el-menu
             :default-active="$route.path"
             :collapse="sidebarCollapsed"
@@ -102,12 +94,12 @@
 
             <el-menu-item index="/settings" class="menu-item-enhanced">
               <el-icon><Setting /></el-icon>
-              <span>系统设置</span>
+              <span>设置</span>
             </el-menu-item>
 
             <el-menu-item index="/logs" class="menu-item-enhanced">
               <el-icon><Document /></el-icon>
-              <span>系统日志</span>
+              <span>日志</span>
             </el-menu-item>
           </el-menu>
         </div>
@@ -115,27 +107,32 @@
 
       <!-- 底部工具栏 -->
       <div class="sidebar-footer">
-        <div class="footer-tools">
-          <el-tooltip content="主题切换" placement="right" :disabled="!sidebarCollapsed">
-            <el-button text @click="toggleTheme" class="footer-btn">
-              <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-            </el-button>
-          </el-tooltip>
-
-          <el-tooltip content="全屏" placement="right" :disabled="!sidebarCollapsed">
-            <el-button text @click="toggleFullscreen" class="footer-btn">
-              <el-icon><FullScreen /></el-icon>
-            </el-button>
-          </el-tooltip>
-
-          <el-tooltip content="帮助" placement="right" :disabled="!sidebarCollapsed">
-            <el-button text @click="showHelp" class="footer-btn">
-              <el-icon><QuestionFilled /></el-icon>
+        <!-- 收缩按钮 -->
+        <div class="collapse-section">
+          <el-tooltip :content="sidebarCollapsed ? '展开侧边栏' : '收缩侧边栏'" placement="right">
+            <el-button
+              text
+              @click="toggleSidebar"
+              class="collapse-btn">
+              <el-icon><Expand v-if="sidebarCollapsed" /><Fold v-else /></el-icon>
             </el-button>
           </el-tooltip>
         </div>
 
-        <div class="version-info" v-if="!sidebarCollapsed">
+        <!-- 快捷工具 -->
+        <div class="footer-tools" v-show="!sidebarCollapsed">
+          <el-button link @click="toggleTheme" class="footer-btn">
+            <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
+            <span>主题</span>
+          </el-button>
+
+          <el-button link @click="showHelp" class="footer-btn">
+            <el-icon><QuestionFilled /></el-icon>
+            <span>帮助</span>
+          </el-button>
+        </div>
+
+        <div class="version-info" v-show="!sidebarCollapsed">
           <span>v1.0.0</span>
         </div>
       </div>
@@ -146,33 +143,38 @@
       <!-- 顶部导航 -->
       <header class="header">
         <div class="header-left">
-          <el-button 
-            text 
-            @click="toggleSidebar"
-            class="sidebar-toggle">
-            <el-icon><Expand v-if="sidebarCollapsed" /><Fold v-else /></el-icon>
-          </el-button>
-          
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/dashboard' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>{{ $route.meta.title }}</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ $route.meta.title || '朝闻阁管理系统' }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
-        
+
         <div class="header-right">
-          <el-button text>
-            <el-icon><Bell /></el-icon>
-          </el-button>
-          
-          <el-dropdown>
+          <el-tooltip content="通知消息" placement="bottom">
+            <el-button link class="notification-btn">
+              <el-icon><Bell /></el-icon>
+              <el-badge :value="newNotifications" :hidden="newNotifications === 0" class="notification-badge" />
+            </el-button>
+          </el-tooltip>
+
+          <el-dropdown @command="handleUserCommand">
             <div class="user-info">
-              <el-avatar size="small">管</el-avatar>
-              <span>管理员</span>
+              <el-avatar size="small" class="user-avatar">
+                <el-icon><User /></el-icon>
+              </el-avatar>
+              <span class="user-name">管理员</span>
+              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>个人设置</el-dropdown-item>
-                <el-dropdown-item divided>退出登录</el-dropdown-item>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>
+                  个人资料
+                </el-dropdown-item>
+                <el-dropdown-item command="logout" divided>
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -200,21 +202,19 @@ import {
   Expand,
   Fold,
   Bell,
-  Star,
   User,
-  MoreFilled,
   Document,
   Sunny,
   Moon,
-  FullScreen,
-  QuestionFilled
+  QuestionFilled,
+  ArrowDown,
+  SwitchButton
 } from '@element-plus/icons-vue'
 
 // 响应式数据
 const sidebarCollapsed = ref(false)
 const isDark = ref(false)
 const newNotifications = ref(3)
-const componentCount = ref(12)
 const hasFileUpdates = ref(true)
 
 // 切换侧边栏
@@ -242,17 +242,6 @@ const toggleTheme = () => {
   ElMessage.success(`已切换到${isDark.value ? '深色' : '浅色'}主题`)
 }
 
-// 全屏切换
-const toggleFullscreen = () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen()
-    ElMessage.success('已进入全屏模式')
-  } else {
-    document.exitFullscreen()
-    ElMessage.success('已退出全屏模式')
-  }
-}
-
 // 显示帮助
 const showHelp = () => {
   ElMessage.info('帮助文档功能开发中...')
@@ -268,26 +257,32 @@ const showHelp = () => {
 
 .sidebar {
   width: 280px;
-  background: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-right: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  position: relative;
 
   &.collapsed {
     width: 72px;
+
+    .logo-section .logo .logo-text {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
   }
 
   .logo-section {
-    padding: 20px;
+    padding: 24px 20px;
     border-bottom: 1px solid #e5e7eb;
+    background: white;
 
     .logo {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 16px;
 
       .logo-icon {
         width: 40px;
@@ -297,52 +292,34 @@ const showHelp = () => {
         justify-content: center;
         background: linear-gradient(135deg, #2563eb, #3b82f6);
         color: white;
-        border-radius: 10px;
+        border-radius: 12px;
         font-size: 20px;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        flex-shrink: 0;
 
         img {
           width: 32px;
           height: 32px;
-          border-radius: 6px;
+          border-radius: 8px;
         }
       }
 
       .logo-text {
+        transition: all 0.3s ease;
+        overflow: hidden;
+
         h2 {
           font-size: 18px;
           font-weight: 700;
           color: #1f2937;
           margin: 0 0 2px 0;
+          white-space: nowrap;
         }
 
         .logo-subtitle {
           font-size: 12px;
           color: #6b7280;
-        }
-      }
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-
-      .user-details {
-        flex: 1;
-
-        .user-name {
-          font-size: 14px;
-          font-weight: 500;
-          color: #1f2937;
-          margin-bottom: 2px;
-        }
-
-        .user-role {
-          font-size: 12px;
-          color: #6b7280;
+          white-space: nowrap;
         }
       }
     }
@@ -350,20 +327,36 @@ const showHelp = () => {
 
   .nav-menu {
     flex: 1;
-    padding: 16px 0;
+    padding: 20px 0;
     overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+    }
 
     .menu-section {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
 
       .section-title {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        padding: 0 20px 8px;
+        color: #9ca3af;
+        letter-spacing: 0.1em;
+        padding: 0 20px 12px;
         margin-bottom: 8px;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        overflow: hidden;
       }
     }
 
@@ -373,99 +366,159 @@ const showHelp = () => {
     }
 
     :deep(.el-menu-item) {
-      margin: 0 12px 4px;
-      border-radius: 8px;
-      transition: all 0.3s ease;
+      margin: 0 12px 6px;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       color: #64748b;
       position: relative;
+      height: 48px;
+      line-height: 48px;
 
       &.menu-item-enhanced {
         display: flex;
         align-items: center;
 
-        .menu-badge {
-          margin-left: auto;
-          margin-right: 8px;
-        }
-
-        .menu-indicator {
+        .menu-status-dot {
           width: 6px;
           height: 6px;
           background: #ef4444;
           border-radius: 50%;
           margin-left: auto;
+          margin-right: 12px;
+          animation: pulse 2s infinite;
+        }
+
+        .menu-hot-badge {
+          background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+          color: white;
+          font-size: 10px;
+          font-weight: 600;
+          padding: 2px 6px;
+          border-radius: 8px;
+          margin-left: auto;
           margin-right: 8px;
+          box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+        }
+
+        .menu-count-badge {
+          background: #e5e7eb;
+          color: #6b7280;
+          font-size: 11px;
+          font-weight: 500;
+          padding: 2px 6px;
+          border-radius: 10px;
+          margin-left: auto;
+          margin-right: 8px;
+          min-width: 20px;
+          text-align: center;
         }
       }
 
       &:hover {
         background: rgba(37, 99, 235, 0.08);
         color: #2563eb;
-        transform: translateX(2px);
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+
+        .menu-count-badge {
+          background: rgba(37, 99, 235, 0.1);
+          color: #2563eb;
+        }
       }
 
       &.is-active {
         background: linear-gradient(135deg, #2563eb, #3b82f6);
         color: white;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+        transform: translateX(4px);
 
         .el-icon {
           color: white;
         }
-      }
-    }
 
-    :deep(.el-sub-menu) {
-      margin: 0 12px 4px;
-
-      .el-sub-menu__title {
-        border-radius: 8px;
-        color: #64748b;
-        transition: all 0.3s ease;
-
-        &:hover {
-          background: rgba(37, 99, 235, 0.08);
-          color: #2563eb;
+        .menu-count-badge {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
         }
-      }
 
-      .el-menu-item {
-        margin: 0 0 2px 0;
-        padding-left: 48px !important;
-
-        &:hover {
-          transform: translateX(4px);
+        .menu-hot-badge {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
         }
       }
     }
   }
 
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
   .sidebar-footer {
-    padding: 16px;
+    padding: 20px 16px;
     border-top: 1px solid #e5e7eb;
+    background: white;
+
+    .collapse-section {
+      margin-bottom: 16px;
+
+      .collapse-btn {
+        width: 100%;
+        height: 40px;
+        border-radius: 10px;
+        color: #6b7280;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #2563eb;
+          color: white;
+          border-color: #2563eb;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+      }
+    }
 
     .footer-tools {
       display: flex;
+      flex-direction: column;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
 
       .footer-btn {
-        flex: 1;
+        width: 100%;
         height: 36px;
-        border-radius: 6px;
+        border-radius: 8px;
         color: #6b7280;
+        justify-content: flex-start;
+        padding: 0 12px;
+        transition: all 0.3s ease;
+
+        .el-icon {
+          margin-right: 8px;
+        }
 
         &:hover {
           background: #f3f4f6;
           color: #2563eb;
+          transform: translateX(2px);
         }
       }
     }
 
     .version-info {
       text-align: center;
-      font-size: 12px;
+      font-size: 11px;
       color: #9ca3af;
+      padding: 8px;
+      background: #f8fafc;
+      border-radius: 6px;
     }
   }
 }
@@ -478,40 +531,97 @@ const showHelp = () => {
 }
 
 .header {
-  height: 60px;
-  background: #ffffff;
+  height: 64px;
+  background: linear-gradient(90deg, #ffffff 0%, #f8fafc 100%);
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  
+  padding: 0 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
   .header-left {
     display: flex;
     align-items: center;
-    gap: 20px;
-    
-    .sidebar-toggle {
-      font-size: 18px;
+
+    :deep(.el-breadcrumb) {
+      .el-breadcrumb__item {
+        .el-breadcrumb__inner {
+          color: #6b7280;
+          font-weight: 500;
+
+          &:hover {
+            color: #2563eb;
+          }
+        }
+
+        &:last-child .el-breadcrumb__inner {
+          color: #1f2937;
+          font-weight: 600;
+        }
+      }
     }
   }
-  
+
   .header-right {
     display: flex;
     align-items: center;
     gap: 16px;
-    
+
+    .notification-btn {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      color: #6b7280;
+
+      &:hover {
+        background: #f3f4f6;
+        color: #2563eb;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+      }
+    }
+
     .user-info {
       display: flex;
       align-items: center;
       gap: 8px;
       cursor: pointer;
-      padding: 8px;
-      border-radius: 6px;
-      transition: background 0.3s ease;
-      
+      padding: 8px 12px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+
       &:hover {
-        background: rgba(0, 0, 0, 0.05);
+        background: #f8fafc;
+        border-color: #e5e7eb;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .user-avatar {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+      }
+
+      .user-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f2937;
+      }
+
+      .dropdown-icon {
+        font-size: 12px;
+        color: #9ca3af;
+        transition: transform 0.3s ease;
+      }
+
+      &:hover .dropdown-icon {
+        transform: rotate(180deg);
       }
     }
   }
@@ -522,8 +632,25 @@ const showHelp = () => {
   padding: 24px;
   overflow-y: auto;
   background: #f8f9fa;
-  border-radius: 12px;
-  margin: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px 0 0 0;
+  margin: 0;
+  position: relative;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
 }
 </style>

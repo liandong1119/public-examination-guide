@@ -32,7 +32,7 @@
         <div class="knowledge-tree">
           <div class="tree-header">
             <span>知识点树状结构</span>
-            <el-button @click="expandAll" size="small" text>展开全部</el-button>
+            <el-button @click="expandAll" size="small" link>展开全部</el-button>
           </div>
           <el-tree
             ref="knowledgeTree"
@@ -50,10 +50,10 @@
                 <span class="node-label">{{ data.label }}</span>
                 <span class="node-stats">({{ data.children?.length || 0 }})</span>
                 <div class="node-actions">
-                  <el-button @click.stop="editKnowledgePoint(data)" size="small" text>
+                  <el-button @click.stop="editKnowledgePoint(data)" size="small" link>
                     <el-icon><Edit /></el-icon>
                   </el-button>
-                  <el-button @click.stop="deleteKnowledgePoint(data)" size="small" text type="danger">
+                  <el-button @click.stop="deleteKnowledgePoint(data)" size="small" link type="danger">
                     <el-icon><Delete /></el-icon>
                   </el-button>
                 </div>
@@ -253,7 +253,7 @@
             <div class="preview-header">
               <span class="template-name">{{ template.name }}</span>
               <el-dropdown @command="handleTemplateAction">
-                <el-button size="small" text>
+                <el-button size="small" link>
                   <el-icon><MoreFilled /></el-icon>
                 </el-button>
                 <template #dropdown>

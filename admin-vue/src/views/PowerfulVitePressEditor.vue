@@ -38,9 +38,7 @@
     <!-- 主要内容区域 -->
     <div class="editor-main">
       <!-- 左侧文件树 -->
-      <div class="file-sidebar" :class="{ collapsed: sidebarCollapsed }">
-
-
+      <div class="file-sidebar" :class="{ collapsed: sidebarCollapsed }" v-show="!sidebarCollapsed">
         <EnhancedFileTree
           :tree-data="treeData"
           :enable-drag-drop="true"
@@ -57,6 +55,21 @@
 
       <!-- 中间编辑器区域 -->
       <div class="editor-area">
+        <!-- 侧边栏折叠按钮 - 浮动在编辑器内容区域 -->
+        <div class="floating-sidebar-toggle" @click="toggleSidebar">
+          <el-tooltip :content="sidebarCollapsed ? '展开文件目录' : '折叠文件目录'" placement="right">
+            <el-button
+              circle
+              size="small"
+              class="toggle-btn"
+              :type="sidebarCollapsed ? 'primary' : 'default'">
+              <el-icon>
+                <Menu />
+              </el-icon>
+            </el-button>
+          </el-tooltip>
+        </div>
+
         <div v-if="!currentFile" class="empty-state">
           <div class="empty-content">
             <div class="empty-icon">✨</div>
@@ -199,7 +212,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { Menu, Document } from '@element-plus/icons-vue'
 
 import EnhancedMonacoEditor from '@/components/EnhancedMonacoEditor.vue'
 import MarkdownPreview from '@/components/MarkdownPreview.vue'
@@ -588,6 +601,11 @@ const formatDocument = () => {
   if (monacoEditor.value && monacoEditor.value.formatDocument) {
     monacoEditor.value.formatDocument()
   }
+}
+
+// 切换侧边栏
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
 }
 
 const handleEditorScroll = (scrollData) => {
@@ -1091,6 +1109,48 @@ watch(documentContent, () => {
   margin: 8px;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: -16px;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &.collapsed {
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .toggle-button {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    width: 32px;
+    height: 32px;
+
+    .el-icon {
+      font-size: 14px;
+      transition: transform 0.3s ease;
+    }
+
+    &:hover {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+
+      .el-icon {
+        transform: scale(1.2);
+      }
+    }
+  }
 }
 
 .file-sidebar {
@@ -1099,58 +1159,16 @@ watch(documentContent, () => {
   border-right: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   border-radius: 16px 0 0 16px;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
 
   &.collapsed {
-    width: 60px;
-    overflow: hidden;
-
-    .sidebar-header {
-      padding: 20px 8px;
-
-      h3 {
-        display: none;
-      }
-
-      .collapse-btn {
-        margin: 0 auto;
-        transform: rotate(180deg);
-      }
-    }
-
-    .file-tree {
-      padding: 8px;
-
-      .search-box {
-        display: none;
-      }
-    }
-
-    .file-item {
-      justify-content: center;
-      padding: 12px 8px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-
-      .file-name,
-      .file-actions {
-        display: none;
-      }
-
-      .file-icon {
-        font-size: 18px;
-      }
-
-      &:hover {
-        transform: none;
-        background: rgba(102, 126, 234, 0.1);
-      }
-
-      &.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      }
-    }
+    width: 0;
+    min-width: 0;
+    border-right: none;
   }
 
   .sidebar-header {
@@ -1269,6 +1287,60 @@ watch(documentContent, () => {
   flex-direction: column;
   background: rgba(255, 255, 255, 0.98);
   border-radius: 0 16px 16px 0;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+
+  .editor-toolbar {
+    height: 48px;
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .sidebar-toggle-btn {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+      }
+
+      .current-file-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f2937;
+      }
+
+      .no-file-hint {
+        font-size: 14px;
+        color: #9ca3af;
+        font-style: italic;
+      }
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}
+
+/* 当侧边栏折叠时，编辑器区域的样式调整 */
+.file-sidebar.collapsed + .editor-area {
+  border-radius: 16px;
+}
 
   .empty-state {
     flex: 1;
@@ -1282,7 +1354,7 @@ watch(documentContent, () => {
     position: relative;
     overflow: hidden;
 
-    // 添加装饰性背景
+    /* 添加装饰性背景 */
     &::before {
       content: '';
       position: absolute;
@@ -1459,7 +1531,7 @@ watch(documentContent, () => {
         }
       }
 
-      // 移除这里的preview-content样式，让MarkdownPreview组件自己处理
+      /* 移除这里的preview-content样式，让MarkdownPreview组件自己处理 */
     }
   }
 
@@ -1515,9 +1587,8 @@ watch(documentContent, () => {
       }
     }
   }
-}
 
-// 动画效果
+/* 动画效果 */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -1545,7 +1616,7 @@ watch(documentContent, () => {
   }
 }
 
-// 响应式设计
+/* 响应式设计 */
 @media (max-width: 1200px) {
   .file-sidebar {
     width: 280px;
@@ -1613,7 +1684,7 @@ watch(documentContent, () => {
   }
 }
 
-// 深色主题适配
+/* 深色主题适配 */
 .powerful-vitepress-editor[data-theme="dark"] {
   background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
 

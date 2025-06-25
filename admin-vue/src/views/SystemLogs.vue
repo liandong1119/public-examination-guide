@@ -79,7 +79,7 @@
           
           <el-table-column label="操作" width="100">
             <template #default="{ row }">
-              <el-button text @click="viewDetails(row)">详情</el-button>
+              <el-button link @click="viewDetails(row)">详情</el-button>
             </template>
           </el-table-column>
         </el-table>

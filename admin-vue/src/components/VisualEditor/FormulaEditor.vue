@@ -83,7 +83,7 @@
             清空
           </el-button>
           <el-button size="small" @click="formatLatex">
-            <el-icon><Magic /></el-icon>
+            <el-icon><Tools /></el-icon>
             格式化
           </el-button>
         </el-button-group>
@@ -121,7 +121,15 @@
               </div>
               
               <div class="step-formula">
-                <div ref="monacoContainer" class="monaco-container"></div>
+                <div ref="monacoContainer" class="monaco-container" v-if="!monacoError"></div>
+                <el-input
+                  v-else
+                  v-model="formulaSteps[selectedStepIndex].formula"
+                  type="textarea"
+                  placeholder="请输入LaTeX公式..."
+                  :rows="3"
+                  @input="updatePreview"
+                  class="fallback-editor" />
               </div>
               
               <div class="step-description">
@@ -337,7 +345,6 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
-import * as monaco from 'monaco-editor'
 import katex from 'katex'
 import {
   Plus,
@@ -346,7 +353,7 @@ import {
   ArrowLeft,
   ArrowRight,
   QuestionFilled,
-  Magic
+  Tools
 } from '@element-plus/icons-vue'
 
 // 符号定义
@@ -480,34 +487,55 @@ const selectedStepIndex = ref(0)
 const previewStep = ref(0)
 const monacoEditor = ref(null)
 const monacoContainer = ref(null)
+const monacoError = ref(false)
 
 // 初始化Monaco编辑器
 const initMonacoEditor = async () => {
-  if (!monacoContainer.value) return
-  
-  monacoEditor.value = monaco.editor.create(monacoContainer.value, {
-    value: formulaSteps.value[selectedStepIndex.value]?.formula || '',
-    language: 'latex',
-    theme: 'vs',
-    minimap: { enabled: false },
-    scrollBeyondLastLine: false,
-    fontSize: 14,
-    lineNumbers: 'off',
-    glyphMargin: false,
-    folding: false,
-    lineDecorationsWidth: 0,
-    lineNumbersMinChars: 0,
-    wordWrap: 'on'
-  })
-  
-  // 监听内容变化
-  monacoEditor.value.onDidChangeModelContent(() => {
-    const value = monacoEditor.value.getValue()
-    if (formulaSteps.value[selectedStepIndex.value]) {
-      formulaSteps.value[selectedStepIndex.value].formula = value
-      updatePreview()
+  try {
+    // 确保DOM元素存在且是有效的HTMLElement
+    if (!monacoContainer.value || !(monacoContainer.value instanceof HTMLElement)) {
+      console.warn('Monaco container not ready')
+      return
     }
-  })
+
+    // 如果编辑器已存在，先销毁
+    if (monacoEditor.value) {
+      monacoEditor.value.dispose()
+      monacoEditor.value = null
+    }
+
+    // 动态导入Monaco编辑器
+    const monaco = await import('monaco-editor')
+
+    monacoEditor.value = monaco.editor.create(monacoContainer.value, {
+      value: formulaSteps.value[selectedStepIndex.value]?.formula || '',
+      language: 'plaintext', // 改为plaintext，因为latex可能不被支持
+      theme: 'vs',
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      fontSize: 14,
+      lineNumbers: 'off',
+      glyphMargin: false,
+      folding: false,
+      lineDecorationsWidth: 0,
+      lineNumbersMinChars: 0,
+      wordWrap: 'on',
+      automaticLayout: true
+    })
+
+    // 监听内容变化
+    monacoEditor.value.onDidChangeModelContent(() => {
+      const value = monacoEditor.value.getValue()
+      if (formulaSteps.value[selectedStepIndex.value]) {
+        formulaSteps.value[selectedStepIndex.value].formula = value
+        updatePreview()
+      }
+    })
+
+  } catch (error) {
+    console.error('Failed to initialize Monaco editor:', error)
+    monacoError.value = true
+  }
 }
 
 // 插入符号
@@ -625,8 +653,15 @@ const updatePreview = () => {
 
 // 生命周期
 onMounted(async () => {
+  // 等待DOM完全渲染
   await nextTick()
-  initMonacoEditor()
+
+  // 再次确保容器元素存在
+  setTimeout(() => {
+    if (monacoContainer.value) {
+      initMonacoEditor()
+    }
+  }, 100)
 })
 
 onUnmounted(() => {
@@ -812,6 +847,13 @@ defineExpose({
   height: 60px;
   border: 1px solid #ddd;
   border-radius: 4px;
+}
+
+.fallback-editor {
+  :deep(.el-textarea__inner) {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+  }
 }
 
 .preview-panel {

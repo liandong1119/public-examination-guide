@@ -16,14 +16,11 @@
         <button @click="createNewFolder" class="action-btn" title="新建文件夹">
           📁
         </button>
-        <button @click="toggleCollapse" class="action-btn" title="折叠/展开">
-          {{ isCollapsed ? '▶️' : '◀️' }}
-        </button>
       </div>
     </div>
 
     <!-- 搜索框 -->
-    <div class="search-section" v-if="!isCollapsed">
+    <div class="search-section">
       <el-input
         v-model="searchQuery"
         placeholder="搜索文件和文件夹..."
@@ -47,24 +44,8 @@
       </div>
     </div>
 
-    <!-- 折叠状态的简化显示 -->
-    <div class="collapsed-content" v-if="isCollapsed">
-      <div class="collapsed-stats">
-        <div class="stats-badge">{{ props.treeData.length }}</div>
-        <div class="stats-label">项目</div>
-      </div>
-      <div class="collapsed-actions">
-        <button @click="createNewFile" class="collapsed-btn" title="新建文件">
-          📄
-        </button>
-        <button @click="createNewFolder" class="collapsed-btn" title="新建文件夹">
-          📁
-        </button>
-      </div>
-    </div>
-
     <!-- 文件树内容 -->
-    <div class="tree-content" v-if="!isCollapsed" v-loading="loading">
+    <div class="tree-content" v-loading="loading">
       <div class="tree-stats">
         <span class="stats-item">{{ filteredTreeData.length }} 项</span>
         <span class="stats-item" v-if="selectedItems.length">已选择 {{ selectedItems.length }}</span>
@@ -179,7 +160,6 @@ const emit = defineEmits([
 
 // 响应式数据
 const loading = ref(false)
-const isCollapsed = ref(false)
 const searchQuery = ref('')
 const selectedItems = ref([])
 const expandedFolders = ref(new Set())
@@ -267,10 +247,6 @@ const refreshTree = () => {
     loading.value = false
     ElMessage.success('文件树已刷新')
   }, 500)
-}
-
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
 }
 
 const createNewFile = () => {
