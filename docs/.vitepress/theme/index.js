@@ -3,6 +3,7 @@ import { h } from 'vue'
 import './custom.css'
 import './theme-styles.css'
 import './custom-components.css'
+import './home.css'
 
 // 导入主题系统
 import { initTheme } from './themes.js'
