@@ -49,6 +49,8 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
+
 export default {
   name: 'Simple3D',
   props: {
@@ -72,6 +74,7 @@ export default {
   data() {
     return {
       selectedShape: 'cube',
+      // 使用markRaw防止Three.js对象被Vue响应式系统包装
       scene: null,
       camera: null,
       renderer: null,
@@ -103,64 +106,70 @@ export default {
     }
   },
   mounted() {
-    this.init3D()
+    // 延迟初始化，确保DOM完全加载
+    this.$nextTick(() => {
+      setTimeout(() => {
+        this.init3D()
+      }, 100)
+    })
   },
   beforeUnmount() {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId)
-    }
-    if (this.renderer) {
-      this.renderer.dispose()
-    }
+    this.cleanup()
   },
   methods: {
     async init3D() {
       if (typeof window === 'undefined') return
-      
+
       try {
         // 动态导入Three.js
         const THREE = await import('three')
-        window.THREE = THREE
-        
+
+        // 检查canvas是否存在
+        if (!this.$refs.canvas3d) {
+          console.warn('Canvas element not found')
+          this.drawFallback()
+          return
+        }
+
         this.initScene(THREE)
         this.createShape()
         this.addEventListeners()
         this.animate()
       } catch (error) {
-        console.warn('Three.js not available, using fallback')
+        console.warn('Three.js initialization failed:', error)
         this.drawFallback()
       }
     },
     
     initScene(THREE) {
       const canvas = this.$refs.canvas3d
-      
-      // 创建场景
-      this.scene = new THREE.Scene()
+
+      // 创建场景 - 使用markRaw防止响应式包装
+      this.scene = markRaw(new THREE.Scene())
       this.scene.background = new THREE.Color(0xf0f0f0)
-      
-      // 创建相机
-      this.camera = new THREE.PerspectiveCamera(
+
+      // 创建相机 - 使用markRaw防止响应式包装
+      this.camera = markRaw(new THREE.PerspectiveCamera(
         75,
         this.width / this.height,
         0.1,
         1000
-      )
+      ))
       this.camera.position.set(3, 3, 3)
       this.camera.lookAt(0, 0, 0)
-      
-      // 创建渲染器
-      this.renderer = new THREE.WebGLRenderer({ 
+
+      // 创建渲染器 - 使用markRaw防止响应式包装
+      this.renderer = markRaw(new THREE.WebGLRenderer({
         canvas: canvas,
-        antialias: true 
-      })
+        antialias: true
+      }))
       this.renderer.setSize(this.width, this.height)
       this.renderer.shadowMap.enabled = true
-      
+
       // 添加光源
       const ambientLight = new THREE.AmbientLight(0x404040, 0.6)
       this.scene.add(ambientLight)
-      
+
       const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
       directionalLight.position.set(5, 5, 5)
       directionalLight.castShadow = true
@@ -221,8 +230,8 @@ export default {
         opacity: 0.8
       })
       
-      // 创建网格
-      this.currentMesh = new THREE.Mesh(geometry, material)
+      // 创建网格 - 使用markRaw防止响应式包装
+      this.currentMesh = markRaw(new THREE.Mesh(geometry, material))
       this.currentMesh.castShadow = true
       this.scene.add(this.currentMesh)
     },
@@ -269,8 +278,13 @@ export default {
           this.renderer.render(this.scene, this.camera)
         } catch (error) {
           console.warn('3D渲染错误:', error)
-          // 如果3D渲染失败，切换到2D后备方案
+          // 如果3D渲染失败，停止动画并切换到2D后备方案
+          if (this.animationId) {
+            cancelAnimationFrame(this.animationId)
+            this.animationId = null
+          }
           this.drawFallback()
+          return // 停止递归调用
         }
       }
     },
@@ -285,24 +299,49 @@ export default {
       }
     },
     
+    cleanup() {
+      // 清理动画
+      if (this.animationId) {
+        cancelAnimationFrame(this.animationId)
+        this.animationId = null
+      }
+
+      // 清理Three.js资源
+      if (this.renderer) {
+        this.renderer.dispose()
+        this.renderer = null
+      }
+
+      if (this.scene) {
+        // 清理场景中的对象
+        while(this.scene.children.length > 0) {
+          this.scene.remove(this.scene.children[0])
+        }
+        this.scene = null
+      }
+
+      this.camera = null
+      this.currentMesh = null
+    },
+
     drawFallback() {
       // 简单的2D绘制作为后备方案
       const canvas = this.$refs.canvas3d
       if (!canvas) return
       const ctx = canvas.getContext('2d')
       if (!ctx) return
-      
+
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      
+
       // 绘制简单的形状轮廓
       ctx.strokeStyle = '#3b82f6'
       ctx.lineWidth = 2
       ctx.fillStyle = 'rgba(59, 130, 246, 0.3)'
-      
+
       const centerX = canvas.width / 2
       const centerY = canvas.height / 2
       const size = 80
-      
+
       switch (this.selectedShape) {
         case 'cube':
           ctx.fillRect(centerX - size/2, centerY - size/2, size, size)
@@ -314,13 +353,31 @@ export default {
           ctx.fill()
           ctx.stroke()
           break
+        case 'cylinder':
+          // 绘制椭圆表示圆柱体
+          ctx.beginPath()
+          ctx.ellipse(centerX, centerY, size/2, size/3, 0, 0, 2 * Math.PI)
+          ctx.fill()
+          ctx.stroke()
+          break
+        case 'pyramid':
+          // 绘制三角形表示锥体
+          ctx.beginPath()
+          ctx.moveTo(centerX, centerY - size/2)
+          ctx.lineTo(centerX - size/2, centerY + size/2)
+          ctx.lineTo(centerX + size/2, centerY + size/2)
+          ctx.closePath()
+          ctx.fill()
+          ctx.stroke()
+          break
       }
-      
+
       // 添加说明文字
       ctx.fillStyle = '#374151'
       ctx.font = '14px Arial'
       ctx.textAlign = 'center'
-      ctx.fillText('3D功能需要现代浏览器支持', centerX, centerY + size + 30)
+      ctx.fillText('2D预览模式', centerX, centerY + size + 30)
+      ctx.fillText('(3D功能加载中或不支持)', centerX, centerY + size + 50)
     }
   }
 }

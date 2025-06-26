@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { processCustomComponents, processMathFormulas } from './plugins/customComponents.js'
 
 export default defineConfig({
   title: '朝闻阁',
@@ -191,6 +192,36 @@ export default defineConfig({
       formatOptions: {
         dateStyle: 'short',
         timeStyle: 'medium'
+      }
+    }
+  },
+
+  // Markdown配置
+  markdown: {
+    config: (md) => {
+      // 添加自定义组件处理
+      md.renderer.rules.html_block = (tokens, idx) => {
+        const token = tokens[idx]
+        let content = token.content
+
+        // 处理自定义组件
+        content = processCustomComponents(content)
+
+        // 处理数学公式
+        content = processMathFormulas(content)
+
+        return content
+      }
+
+      // 处理行内HTML
+      md.renderer.rules.html_inline = (tokens, idx) => {
+        const token = tokens[idx]
+        let content = token.content
+
+        // 处理数学公式
+        content = processMathFormulas(content)
+
+        return content
       }
     }
   },

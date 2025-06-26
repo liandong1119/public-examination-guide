@@ -46,6 +46,12 @@ const routes = [
     name: 'SystemLogs',
     component: () => import('@/views/SystemLogs.vue'),
     meta: { title: '系统日志' }
+  },
+  {
+    path: '/notifications',
+    name: 'NotificationCenter',
+    component: () => import('@/views/NotificationCenter.vue'),
+    meta: { title: '通知中心' }
   }
 ]
 

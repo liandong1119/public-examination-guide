@@ -6,17 +6,21 @@
 
 ## 🎲 3D几何可视化组件
 
-### 基础用法
+### 高级3D演示（Three.js）
 
 <Simple3D title="立体几何演示" :width="500" :height="350" />
 
+### 稳定2D演示（备用方案）
+
+<Fallback3D title="几何图形演示" :width="500" :height="350" />
+
 ### 自定义参数
 
-<Simple3D 
-  title="自定义3D演示" 
-  :width="600" 
-  :height="400" 
-  :showParameters="true" 
+<Simple3D
+  title="自定义3D演示"
+  :width="600"
+  :height="400"
+  :showParameters="true"
 />
 
 ### 代码示例

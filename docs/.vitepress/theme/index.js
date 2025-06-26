@@ -2,6 +2,7 @@ import DefaultTheme from 'vitepress/theme'
 import { h } from 'vue'
 import './custom.css'
 import './theme-styles.css'
+import './custom-components.css'
 
 // 导入主题系统
 import { initTheme } from './themes.js'
@@ -14,6 +15,7 @@ import GameifiedLearning from '../components/GameifiedLearning.vue'
 import MathFormula from '../components/MathFormula.vue'
 import SimpleChart from '../components/SimpleChart.vue'
 import Simple3D from '../components/Simple3D.vue'
+import Fallback3D from '../components/Fallback3D.vue'
 import StepByStepFormula from '../components/StepByStepFormula.vue'
 import GraphicReasoning from '../components/GraphicReasoning.vue'
 
@@ -56,6 +58,7 @@ export default {
     app.component('MathFormula', MathFormula)
     app.component('SimpleChart', SimpleChart)
     app.component('Simple3D', Simple3D)
+    app.component('Fallback3D', Fallback3D)
     app.component('StepByStepFormula', StepByStepFormula)
     app.component('GraphicReasoning', GraphicReasoning)
     app.component('GlobalThemeSwitcher', GlobalThemeSwitcher)

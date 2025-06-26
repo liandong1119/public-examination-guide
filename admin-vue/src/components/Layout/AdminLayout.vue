@@ -33,6 +33,14 @@
               <span>仪表盘</span>
               <div class="menu-status-dot" v-if="newNotifications > 0"></div>
             </el-menu-item>
+
+            <el-menu-item index="/notifications" class="menu-item-enhanced notification-menu-item">
+              <el-icon><Bell /></el-icon>
+              <span>通知中心</span>
+              <div v-if="unreadNotifications > 0" class="notification-count" :class="{ 'collapsed-mode': sidebarCollapsed }">
+                {{ sidebarCollapsed ? (unreadNotifications > 9 ? '9+' : unreadNotifications) : (unreadNotifications > 99 ? '99+' : unreadNotifications) }}
+              </div>
+            </el-menu-item>
           </el-menu>
         </div>
 
@@ -165,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   DataBoard,
@@ -179,7 +187,8 @@ import {
   Document,
   Sunny,
   Moon,
-  QuestionFilled
+  QuestionFilled,
+  Bell
 } from '@element-plus/icons-vue'
 import NotificationCenter from '@/components/NotificationCenter.vue'
 import UserProfile from '@/components/UserProfile.vue'
@@ -189,6 +198,7 @@ const sidebarCollapsed = ref(false)
 const isDark = ref(false)
 const hasFileUpdates = ref(true)
 const notificationCenter = ref(null)
+const unreadNotifications = ref(5) // 未读通知数量（测试用）
 
 // 切换侧边栏
 const toggleSidebar = () => {
@@ -206,6 +216,34 @@ const toggleTheme = () => {
 const showHelp = () => {
   ElMessage.info('帮助文档功能开发中...')
 }
+
+// 同步通知数量
+const syncNotificationCount = () => {
+  if (notificationCenter.value) {
+    unreadNotifications.value = notificationCenter.value.unreadCount
+  }
+}
+
+// 添加测试通知
+const addTestNotification = () => {
+  if (notificationCenter.value) {
+    notificationCenter.value.addNotification({
+      type: 'info',
+      title: '测试通知',
+      message: '这是一条测试通知消息'
+    })
+    // 更新未读数量
+    syncNotificationCount()
+  }
+}
+
+// 监听通知中心的变化
+onMounted(() => {
+  // 定期同步通知数量
+  setInterval(() => {
+    syncNotificationCount()
+  }, 1000)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -231,6 +269,95 @@ const showHelp = () => {
     .logo-section .logo .logo-text {
       opacity: 0;
       transform: translateX(-20px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    // 折叠状态下的菜单样式重置
+    .el-menu {
+      border: none;
+      background: transparent;
+
+      .el-menu-item {
+        margin: 4px 8px;
+        border-radius: 12px;
+        position: relative;
+        overflow: visible;
+        width: 56px !important;
+        height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        line-height: normal !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important; // 与侧边栏同步
+
+        // 隐藏文字，只显示图标
+        span {
+          display: none !important;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        // 图标完全居中
+        .el-icon {
+          margin: 0 !important;
+          font-size: 20px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        // 激活状态
+        &.is-active {
+          background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+          color: white !important;
+          box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+          transform: none !important;
+
+          .el-icon {
+            color: white !important;
+          }
+
+          // 左侧指示条
+          &::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            border-radius: 0 2px 2px 0;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+          }
+        }
+
+        // 悬停状态
+        &:hover {
+          transform: none !important;
+          background: rgba(37, 99, 235, 0.08) !important;
+
+          &:not(.is-active) {
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+          }
+        }
+
+        // 隐藏所有徽章（除了通知数量）
+        .menu-status-dot,
+        .menu-hot-badge,
+        .menu-count-badge {
+          display: none !important;
+        }
+
+        // 通知数量特殊处理
+        &.notification-menu-item {
+          .notification-count.collapsed-mode {
+            z-index: 10;
+            display: flex !important;
+          }
+        }
+      }
     }
   }
 
@@ -265,7 +392,7 @@ const showHelp = () => {
       }
 
       .logo-text {
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); // 与侧边栏同步
         overflow: hidden;
 
         h2 {
@@ -328,7 +455,7 @@ const showHelp = () => {
     :deep(.el-menu-item) {
       margin: 0 12px 6px;
       border-radius: 12px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); // 与侧边栏宽度变化同步
       color: #64748b;
       position: relative;
       height: 48px;
@@ -338,6 +465,15 @@ const showHelp = () => {
         display: flex;
         align-items: center;
 
+        // 为所有子元素添加同步过渡
+        span {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .el-icon {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         .menu-status-dot {
           width: 6px;
           height: 6px;
@@ -346,6 +482,7 @@ const showHelp = () => {
           margin-left: auto;
           margin-right: 12px;
           animation: pulse 2s infinite;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .menu-hot-badge {
@@ -358,6 +495,7 @@ const showHelp = () => {
           margin-left: auto;
           margin-right: 8px;
           box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .menu-count-badge {
@@ -371,6 +509,46 @@ const showHelp = () => {
           margin-right: 8px;
           min-width: 20px;
           text-align: center;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .notification-count {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+          color: white;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 10px;
+          margin-left: auto;
+          margin-right: 8px;
+          min-width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+          border: 2px solid white;
+          animation: pulse-notification 2s infinite;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); // 与侧边栏同步
+
+          &.collapsed-mode {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            margin: 0;
+            width: auto;
+            height: 16px;
+            min-width: 16px;
+            max-width: 24px;
+            padding: 0 4px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 700;
+            border: 1px solid white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
         }
       }
 
@@ -383,6 +561,16 @@ const showHelp = () => {
         .menu-count-badge {
           background: rgba(37, 99, 235, 0.1);
           color: #2563eb;
+        }
+
+        .notification-count {
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+
+          &.collapsed-mode {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-color: rgba(255, 255, 255, 0.8);
+          }
         }
       }
 
@@ -404,6 +592,18 @@ const showHelp = () => {
         .menu-hot-badge {
           background: rgba(255, 255, 255, 0.2);
           color: white;
+        }
+
+        .notification-count {
+          background: rgba(255, 255, 255, 0.9);
+          color: #2563eb;
+          box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+
+          &.collapsed-mode {
+            background: rgba(255, 255, 255, 0.95);
+            color: #2563eb;
+            border-color: rgba(37, 99, 235, 0.2);
+          }
         }
       }
     }
@@ -613,4 +813,18 @@ const showHelp = () => {
     background: rgba(0, 0, 0, 0.2);
   }
 }
+
+// 通知数量脉冲动画
+@keyframes pulse-notification {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+
 </style>
