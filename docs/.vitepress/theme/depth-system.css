@@ -1,0 +1,433 @@
+/* 🌫️ 景深系统 - 专业级立体视觉设计 */
+
+/* 景深层级定义 */
+:root {
+  /* 基础景深变量 */
+  --depth-base: 0px;
+  --depth-raised: 2px;
+  --depth-elevated: 4px;
+  --depth-floating: 8px;
+  --depth-modal: 16px;
+  --depth-tooltip: 24px;
+  
+  /* 景深阴影系统 */
+  --shadow-base: 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-raised: 
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 
+    0 3px 6px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 
+    0 10px 20px rgba(0, 0, 0, 0.15),
+    0 3px 6px rgba(0, 0, 0, 0.10);
+  --shadow-modal: 
+    0 15px 35px rgba(0, 0, 0, 0.15),
+    0 5px 15px rgba(0, 0, 0, 0.08);
+  --shadow-tooltip: 
+    0 25px 50px rgba(0, 0, 0, 0.25),
+    0 10px 20px rgba(0, 0, 0, 0.15);
+  
+  /* 内阴影系统 */
+  --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-inset-deep: inset 0 4px 8px rgba(0, 0, 0, 0.12);
+  
+  /* 景深过渡 */
+  --depth-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --depth-transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --depth-transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* 景深颜色叠加 */
+  --depth-overlay-light: rgba(255, 255, 255, 0.05);
+  --depth-overlay-medium: rgba(255, 255, 255, 0.1);
+  --depth-overlay-strong: rgba(255, 255, 255, 0.15);
+  
+  /* 景深边框 */
+  --depth-border-light: rgba(255, 255, 255, 0.1);
+  --depth-border-medium: rgba(255, 255, 255, 0.2);
+  --depth-border-strong: rgba(255, 255, 255, 0.3);
+}
+
+/* 暗色主题景深调整 */
+.dark {
+  --shadow-raised: 
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 
+    0 3px 6px rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-floating: 
+    0 10px 20px rgba(0, 0, 0, 0.4),
+    0 3px 6px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 
+    0 15px 35px rgba(0, 0, 0, 0.5),
+    0 5px 15px rgba(0, 0, 0, 0.3);
+  --shadow-tooltip: 
+    0 25px 50px rgba(0, 0, 0, 0.6),
+    0 10px 20px rgba(0, 0, 0, 0.4);
+    
+  --depth-overlay-light: rgba(255, 255, 255, 0.03);
+  --depth-overlay-medium: rgba(255, 255, 255, 0.06);
+  --depth-overlay-strong: rgba(255, 255, 255, 0.1);
+}
+
+/* 景深主题特殊处理 */
+[data-theme="depth"] {
+  --shadow-raised:
+    0 2px 4px rgba(79, 70, 229, 0.1),
+    0 1px 2px rgba(79, 70, 229, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-elevated:
+    0 4px 8px rgba(79, 70, 229, 0.15),
+    0 2px 4px rgba(79, 70, 229, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-floating:
+    0 12px 24px rgba(79, 70, 229, 0.2),
+    0 4px 8px rgba(79, 70, 229, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --shadow-modal:
+    0 20px 40px rgba(79, 70, 229, 0.25),
+    0 8px 16px rgba(79, 70, 229, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* 🌫️ 动态景深壁纸效果 */
+[data-theme="depth"] body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(79, 70, 229, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(79, 70, 229, 0.02) 0%, rgba(99, 102, 241, 0.01) 100%);
+  pointer-events: none;
+  z-index: -1;
+  animation: depthWallpaperShift 20s ease-in-out infinite;
+}
+
+/* 景深壁纸动画 */
+@keyframes depthWallpaperShift {
+  0%, 100% {
+    background:
+      radial-gradient(circle at 20% 80%, rgba(79, 70, 229, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+  }
+  25% {
+    background:
+      radial-gradient(circle at 60% 30%, rgba(79, 70, 229, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 30% 70%, rgba(99, 102, 241, 0.09) 0%, transparent 50%),
+      radial-gradient(circle at 80% 60%, rgba(139, 92, 246, 0.07) 0%, transparent 50%);
+  }
+  50% {
+    background:
+      radial-gradient(circle at 80% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 60% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+  }
+  75% {
+    background:
+      radial-gradient(circle at 40% 60%, rgba(79, 70, 229, 0.09) 0%, transparent 50%),
+      radial-gradient(circle at 70% 30%, rgba(99, 102, 241, 0.07) 0%, transparent 50%),
+      radial-gradient(circle at 30% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+  }
+}
+
+/* 景深粒子效果 */
+[data-theme="depth"] body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 200px 200px, 300px 300px, 150px 150px, 250px 250px, 180px 180px;
+  pointer-events: none;
+  z-index: -1;
+  animation: depthParticles 30s linear infinite;
+}
+
+@keyframes depthParticles {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-50px, -50px);
+  }
+}
+
+/* 景深工具类 */
+.depth-base {
+  box-shadow: var(--shadow-base);
+  transform: translateZ(var(--depth-base));
+}
+
+.depth-raised {
+  box-shadow: var(--shadow-raised);
+  transform: translateZ(var(--depth-raised));
+  transition: var(--depth-transition);
+}
+
+.depth-elevated {
+  box-shadow: var(--shadow-elevated);
+  transform: translateZ(var(--depth-elevated));
+  transition: var(--depth-transition);
+}
+
+.depth-floating {
+  box-shadow: var(--shadow-floating);
+  transform: translateZ(var(--depth-floating));
+  transition: var(--depth-transition);
+}
+
+.depth-modal {
+  box-shadow: var(--shadow-modal);
+  transform: translateZ(var(--depth-modal));
+  transition: var(--depth-transition);
+}
+
+.depth-tooltip {
+  box-shadow: var(--shadow-tooltip);
+  transform: translateZ(var(--depth-tooltip));
+  transition: var(--depth-transition);
+}
+
+/* 景深交互状态 */
+.depth-interactive {
+  transition: var(--depth-transition);
+  cursor: pointer;
+}
+
+.depth-interactive:hover {
+  transform: translateY(-2px) translateZ(var(--depth-elevated));
+  box-shadow: var(--shadow-floating);
+}
+
+.depth-interactive:active {
+  transform: translateY(0) translateZ(var(--depth-raised));
+  box-shadow: var(--shadow-elevated);
+  transition: var(--depth-transition-fast);
+}
+
+/* 景深表面材质 */
+.depth-surface {
+  position: relative;
+  overflow: hidden;
+}
+
+.depth-surface::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    var(--depth-overlay-light) 0%, 
+    transparent 50%, 
+    rgba(0, 0, 0, 0.02) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.depth-surface::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--depth-border-light);
+  pointer-events: none;
+}
+
+/* 景深玻璃效果 */
+.depth-glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--depth-border-light);
+}
+
+.dark .depth-glass {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 景深卡片组件 */
+.depth-card {
+  background: var(--theme-surface, var(--vp-c-bg-soft));
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--theme-border, var(--vp-c-divider));
+  position: relative;
+  overflow: hidden;
+}
+
+.depth-card.raised {
+  @extend .depth-raised;
+  @extend .depth-surface;
+}
+
+.depth-card.elevated {
+  @extend .depth-elevated;
+  @extend .depth-surface;
+}
+
+.depth-card.floating {
+  @extend .depth-floating;
+  @extend .depth-surface;
+}
+
+/* 景深按钮 */
+.depth-button {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--depth-transition);
+  background: var(--theme-primary, var(--vp-c-brand));
+  color: white;
+}
+
+.depth-button.raised {
+  box-shadow: var(--shadow-raised);
+}
+
+.depth-button.elevated {
+  box-shadow: var(--shadow-elevated);
+}
+
+.depth-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-floating);
+}
+
+.depth-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-raised);
+  transition: var(--depth-transition-fast);
+}
+
+/* 景深输入框 */
+.depth-input {
+  border: 1px solid var(--theme-border, var(--vp-c-divider));
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  background: var(--theme-background, var(--vp-c-bg));
+  transition: var(--depth-transition);
+  box-shadow: var(--shadow-inset);
+}
+
+.depth-input:focus {
+  outline: none;
+  border-color: var(--theme-primary, var(--vp-c-brand));
+  box-shadow: 
+    var(--shadow-inset),
+    0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 景深导航 */
+.depth-nav {
+  background: var(--theme-background, var(--vp-c-bg));
+  border-bottom: 1px solid var(--theme-border, var(--vp-c-divider));
+  box-shadow: var(--shadow-raised);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 景深侧边栏 */
+.depth-sidebar {
+  background: var(--theme-surface, var(--vp-c-bg-soft));
+  border-right: 1px solid var(--theme-border, var(--vp-c-divider));
+  box-shadow: var(--shadow-elevated);
+}
+
+/* 景深模态框 */
+.depth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+}
+
+.depth-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--theme-background, var(--vp-c-bg));
+  border-radius: 16px;
+  box-shadow: var(--shadow-modal);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  z-index: 1001;
+}
+
+/* 景深工具提示 */
+.depth-tooltip {
+  position: absolute;
+  background: var(--theme-text, var(--vp-c-text-1));
+  color: var(--theme-background, var(--vp-c-bg));
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  box-shadow: var(--shadow-tooltip);
+  z-index: 1002;
+  pointer-events: none;
+}
+
+/* 响应式景深调整 */
+@media (max-width: 768px) {
+  :root {
+    --shadow-floating: 
+      0 6px 12px rgba(0, 0, 0, 0.15),
+      0 2px 4px rgba(0, 0, 0, 0.10);
+    --shadow-modal: 
+      0 10px 25px rgba(0, 0, 0, 0.15),
+      0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+  
+  .depth-interactive:hover {
+    transform: translateY(-1px) translateZ(var(--depth-raised));
+    box-shadow: var(--shadow-elevated);
+  }
+}
+
+/* 减少动画偏好支持 */
+@media (prefers-reduced-motion: reduce) {
+  .depth-raised,
+  .depth-elevated,
+  .depth-floating,
+  .depth-modal,
+  .depth-tooltip,
+  .depth-interactive,
+  .depth-button,
+  .depth-input {
+    transition: none !important;
+  }
+  
+  .depth-interactive:hover,
+  .depth-button:hover {
+    transform: none !important;
+  }
+}

@@ -211,9 +211,51 @@ export const themes = {
     }
   },
 
-  // ⚪ 简约白 - 极简主义，专注内容
-  minimal: {
-    name: '简约白',
+  // 🌫️ 景深灰 - 立体层次，空间美学
+  depth: {
+    name: '景深灰',
+    description: '基于空间美学的立体主题，强调层次感和景深效果',
+    colors: {
+      primary: '#4f46e5',        // 深紫蓝主色，立体感强
+      secondary: '#6366f1',      // 亮紫蓝辅助，层次分明
+      accent: '#8b5cf6',         // 紫色强调，空间感强
+      background: '#fafafa',     // 浅灰背景，突出层次
+      surface: '#f5f5f5',        // 灰白表面，立体基础
+      surfaceElevated: '#eeeeee', // 提升表面，景深效果
+      text: '#1a1a1a',           // 深黑文字，强对比
+      textSecondary: '#525252',  // 中灰文字，层次清晰
+      textMuted: '#737373',      // 浅灰文字，信息层级
+      border: '#d4d4d4',         // 浅灰边框，柔和分割
+      borderHover: '#a3a3a3',    // 悬停边框，交互反馈
+      success: '#16a34a',        // 成功绿色，积极反馈
+      warning: '#ea580c',        // 警告橙色，注意提醒
+      error: '#dc2626',          // 错误红色，清晰标识
+      info: '#0ea5e9'            // 信息蓝色，友好提示
+    },
+    gradients: {
+      primary: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #8b5cf6 100%)',
+      secondary: 'linear-gradient(135deg, #f5f5f5 0%, #eeeeee 50%, #e5e5e5 100%)',
+      hero: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+      surface: 'linear-gradient(145deg, #f5f5f5 0%, #eeeeee 100%)',
+      card: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)'
+    },
+    fonts: {
+      primary: '"Inter", "Noto Sans SC", sans-serif',
+      heading: '"Poppins", "Noto Sans SC", sans-serif',
+      mono: '"JetBrains Mono", "Fira Code", monospace'
+    },
+    shadows: {
+      card: '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)',
+      elevated: '0 8px 24px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15)',
+      floating: '0 12px 32px rgba(0, 0, 0, 0.25), 0 6px 12px rgba(0, 0, 0, 0.2)',
+      inset: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
+      glow: '0 0 20px rgba(79, 70, 229, 0.3)'
+    }
+  },
+
+  // 更新 minimal 主题名称为 gray
+  gray: {
+    name: '简约灰',
     description: '基于极简主义设计哲学的纯净主题，消除干扰专注内容',
     colors: {
       primary: '#374151',        // 深灰主色，沉稳专业
@@ -233,23 +275,23 @@ export const themes = {
       info: '#0ea5e9'            // 信息蓝色，友好提示
     },
     gradients: {
-      primary: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
-      secondary: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)',
-      hero: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)',
-      surface: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)'
+      primary: 'linear-gradient(135deg, #374151 0%, #4b5563 50%, #6b7280 100%)',
+      secondary: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%)',
+      hero: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #d1d5db 100%)',
+      surface: 'linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%)',
+      card: 'linear-gradient(145deg, #ffffff 0%, #f9fafb 100%)'
     },
     fonts: {
-      primary: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif',
-      heading: '"Inter", "Noto Sans SC", sans-serif',
-      mono: '"JetBrains Mono", "SF Mono", "Cascadia Code", "Consolas", monospace',
-      display: '"Inter", system-ui, sans-serif'
+      primary: '"Inter", "Noto Sans SC", sans-serif',
+      heading: '"Poppins", "Noto Sans SC", sans-serif',
+      mono: '"JetBrains Mono", "Fira Code", monospace'
     },
     shadows: {
-      sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-      md: '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
-      lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-      xl: '0 20px 25px -5px rgba(0, 0, 0, 0.12)',
-      inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)'
+      card: '0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
+      elevated: '0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.1)',
+      floating: '0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.12)',
+      inset: 'inset 0 1px 3px rgba(0, 0, 0, 0.08)',
+      glow: '0 0 16px rgba(107, 114, 128, 0.2)'
     }
   }
 }
@@ -258,33 +300,46 @@ export const themes = {
 export function applyTheme(themeName) {
   const theme = themes[themeName] || themes.default
   const root = document.documentElement
-  
+
+  // 设置data-theme属性，用于CSS选择器
+  root.setAttribute('data-theme', themeName)
+
   // 应用颜色变量
   Object.entries(theme.colors).forEach(([key, value]) => {
     root.style.setProperty(`--theme-${key}`, value)
   })
-  
+
   // 应用渐变变量
   Object.entries(theme.gradients).forEach(([key, value]) => {
     root.style.setProperty(`--theme-gradient-${key}`, value)
   })
-  
+
   // 应用字体变量
   Object.entries(theme.fonts).forEach(([key, value]) => {
     root.style.setProperty(`--theme-font-${key}`, value)
   })
-  
+
   // 应用阴影变量
   Object.entries(theme.shadows).forEach(([key, value]) => {
     root.style.setProperty(`--theme-shadow-${key}`, value)
   })
-  
+
+  // 应用景深系统变量
+  if (theme.shadows) {
+    // 更新景深阴影变量
+    if (theme.shadows.raised) root.style.setProperty('--shadow-raised', theme.shadows.raised)
+    if (theme.shadows.elevated) root.style.setProperty('--shadow-elevated', theme.shadows.elevated)
+    if (theme.shadows.floating) root.style.setProperty('--shadow-floating', theme.shadows.floating)
+    if (theme.shadows.modal) root.style.setProperty('--shadow-modal', theme.shadows.modal)
+    if (theme.shadows.card) root.style.setProperty('--shadow-card', theme.shadows.card)
+  }
+
   // 保存主题选择
   localStorage.setItem('selected-theme', themeName)
-  
+
   // 触发主题变更事件
-  window.dispatchEvent(new CustomEvent('theme-changed', { 
-    detail: { theme: themeName, config: theme } 
+  window.dispatchEvent(new CustomEvent('theme-changed', {
+    detail: { theme: themeName, config: theme }
   }))
 }
 
@@ -301,14 +356,28 @@ export function initTheme() {
 
 // 获取主题列表
 export function getThemeList() {
+  const themeIcons = {
+    default: '🌊',
+    green: '🌿',
+    dark: '🌙',
+    orange: '🔥',
+    purple: '💜',
+    depth: '🌫️',
+    minimal: '⚪'
+  }
+
   return Object.entries(themes).map(([key, theme]) => ({
     key,
     name: theme.name,
     description: theme.description,
+    icon: themeIcons[key] || '🎨',
     preview: {
       primary: theme.colors.primary,
       secondary: theme.colors.secondary,
+      accent: theme.colors.accent,
       background: theme.colors.background
-    }
+    },
+    colors: theme.colors
   }))
 }
+

@@ -34,17 +34,233 @@
   }
 }
 
-/* 导航栏优化 */
+/* 🎨 导航栏优化 */
 .VPNav {
-  backdrop-filter: blur(10px);
-  background-color: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
 }
 
 .dark .VPNav {
-  background-color: rgba(26, 26, 26, 0.95);
-  border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+  background-color: rgba(26, 26, 26, 0.85) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 导航栏标题优化 */
+.VPNavBarTitle .title {
+  font-weight: 700;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, var(--vp-c-brand) 0%, var(--vp-c-brand-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.025em;
+  transition: all 0.3s ease;
+}
+
+/* 🧭 导航栏布局统一化 - 适配所有页面类型 */
+.VPNavBar {
+  height: 64px !important;
+  z-index: 1000 !important;
+  padding: 0 24px !important;
+}
+
+/* 确保导航栏内容布局一致 */
+.VPNavBar .container {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.VPNavBar .content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 64px !important;
+  width: 100% !important;
+}
+
+/* 导航栏左侧 - 标题区域 */
+.VPNavBar .title {
+  flex-shrink: 0 !important;
+  margin-right: 2rem !important;
+}
+
+/* 导航栏中间 - 导航菜单 */
+.VPNavBar .nav {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.VPNavBar .nav .VPNavBarMenu {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+/* 导航栏右侧 - 主题切换器等 */
+.VPNavBar .nav-theme-switcher {
+  flex-shrink: 0 !important;
+  margin-left: 1rem !important;
+}
+
+/* 导航菜单项优化 */
+.VPNavBarMenuLink {
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 0.875rem !important;
+  margin: 0 !important;
+  position: relative !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  min-width: fit-content !important;
+}
+
+.VPNavBarMenuLink::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.VPNavBarMenuLink:hover::before {
+  left: 100%;
+}
+
+.VPNavBarMenuLink:hover {
+  background: var(--vp-c-brand-soft) !important;
+  color: var(--vp-c-brand) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* 🎨 主题切换器样式优化 */
+.VPNavBar .nav-theme-switcher {
+  display: flex;
+  align-items: center;
+}
+
+.VPNavBar .theme-toggle-btn {
+  height: 32px;
+  font-size: 0.8125rem;
+  border-color: var(--vp-c-divider-light);
+}
+
+.VPNavBar .theme-toggle-btn:hover {
+  border-color: var(--vp-c-brand);
+  background: var(--vp-c-brand-soft);
+}
+
+/* 📄 确保所有页面布局的内容区域都有正确的顶部间距 */
+
+/* 首页布局 - 有hero区域，不需要额外间距 */
+.VPHome {
+  padding-top: 0 !important;
+}
+
+.VPHome .VPContent {
+  padding-top: 0 !important;
+}
+
+/* 文档布局 - 有侧边栏的页面 */
+.VPDoc {
+  padding-top: 0 !important;
+}
+
+.VPDoc .VPContent {
+  padding-top: 0 !important;
+}
+
+/* 普通页面布局 - 需要顶部间距 */
+.VPContent {
+  min-height: calc(100vh - 64px);
+}
+
+/* 侧边栏调整 */
+.VPSidebar {
+  top: 64px !important;
+  height: calc(100vh - 64px) !important;
+}
+
+/* 文档内容区域 */
+.VPDoc .content {
+  padding-top: 0 !important;
+}
+
+/* 确保页面内容不被导航栏遮挡 */
+body {
+  padding-top: 0 !important;
+}
+
+/* 主内容区域 */
+.VPContent.is-home {
+  padding-top: 0 !important;
+}
+
+.VPContent:not(.is-home) {
+  padding-top: 64px !important;
+}
+
+/* 📱 移动端导航栏统一适配 */
+@media (max-width: 768px) {
+  .VPNavBar {
+    height: 56px !important; /* 移动端稍微降低高度 */
+    padding: 0 16px !important;
+  }
+
+  .VPNavBar .content {
+    height: 56px !important;
+  }
+
+  .VPNavBar .title {
+    margin-right: 1rem !important;
+  }
+
+  .VPNavBar .nav-theme-switcher {
+    margin-left: 0.5rem !important;
+  }
+
+  .VPNavBar .theme-toggle-btn {
+    padding: 0.25rem 0.5rem;
+    height: 28px;
+  }
+
+  .VPNavBar .theme-icon {
+    font-size: 1rem;
+  }
+
+  /* 移动端内容区域调整 */
+  .VPContent:not(.is-home) {
+    padding-top: 56px !important;
+  }
+
+  .VPSidebar {
+    top: 56px !important;
+    height: calc(100vh - 56px) !important;
+  }
+
+  .VPContent {
+    min-height: calc(100vh - 56px);
+  }
+
+  /* 移动端首页调整 */
+  .VPHome {
+    padding-top: 0 !important;
+  }
+
+  .VPHome .VPContent {
+    padding-top: 0 !important;
+  }
 }
 
 /* 导航栏内容优化 */

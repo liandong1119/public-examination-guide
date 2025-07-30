@@ -8,7 +8,7 @@
       :aria-expanded="showPanel"
       aria-haspopup="true"
     >
-      <div class="theme-preview" :style="{ background: currentTheme.color }"></div>
+      <span class="theme-icon">{{ currentTheme.icon || '🎨' }}</span>
       <span class="theme-text">{{ currentTheme.name }}</span>
       <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="m6 9 6 6 6-6"/>
@@ -103,6 +103,34 @@
             </svg>
             重置默认
           </button>
+        </div>
+
+        <!-- 字体选择器 -->
+        <div class="font-selector">
+          <h4>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7V4h16v3"/>
+              <path d="M9 20h6"/>
+              <path d="M12 4v16"/>
+            </svg>
+            字体设置
+          </h4>
+          <div class="font-grid">
+            <div
+              v-for="font in fontOptions"
+              :key="font.value"
+              @click="selectFont(font.value)"
+              :class="['font-option', { active: selectedFont === font.value }]"
+            >
+              <div class="font-name" :style="{ fontFamily: font.preview }">
+                {{ font.name }}
+              </div>
+              <div class="font-description">{{ font.description }}</div>
+              <div class="font-preview" :style="{ fontFamily: font.preview }">
+                Aa 中文 123
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </transition>
@@ -386,6 +414,14 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.theme-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  line-height: 1;
+}
+
 .theme-preview {
   width: 16px;
   height: 16px;
@@ -659,6 +695,100 @@ export default {
   color: var(--vp-c-brand);
 }
 
+/* 字体选择器样式 */
+.font-selector {
+  padding: 1.5rem;
+  border-top: 1px solid var(--theme-border, var(--vp-c-divider));
+  background: var(--theme-surface, var(--vp-c-bg-soft));
+}
+
+.font-selector h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--theme-text, var(--vp-c-text-1));
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.font-selector h4 svg {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.7;
+}
+
+.font-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.font-option {
+  padding: 0.75rem;
+  border: 1px solid var(--theme-border, var(--vp-c-divider));
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-in-out);
+  background: var(--theme-background, var(--vp-c-bg));
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.font-option:hover {
+  border-color: var(--theme-primary, var(--vp-c-brand));
+  background: var(--theme-surfaceElevated, var(--vp-c-bg-mute));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-raised);
+}
+
+.font-option.active {
+  border-color: var(--theme-primary, var(--vp-c-brand));
+  background: var(--theme-surfaceElevated, var(--vp-c-bg-mute));
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.font-option.active::after {
+  content: '✓';
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 16px;
+  height: 16px;
+  background: var(--theme-primary, var(--vp-c-brand));
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: bold;
+}
+
+.font-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--theme-text, var(--vp-c-text-1));
+  line-height: 1.2;
+}
+
+.font-description {
+  font-size: 0.6875rem;
+  color: var(--theme-textSecondary, var(--vp-c-text-2));
+  margin-bottom: 0.25rem;
+  opacity: 0.8;
+}
+
+.font-preview {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  color: var(--theme-textSecondary, var(--vp-c-text-2));
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+}
+
 .theme-overlay {
   position: fixed;
   top: 0;
@@ -693,7 +823,7 @@ export default {
   }
 
   .font-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .footer-options {
@@ -710,5 +840,69 @@ export default {
   .theme-toggle-btn {
     padding: 0.375rem 0.5rem;
   }
+
+  .theme-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+
+  .theme-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .font-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .font-option {
+    padding: 1rem;
+  }
+
+  .panel-header {
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--theme-surface, var(--vp-c-bg-soft));
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .theme-card,
+  .font-option {
+    border-width: 2px;
+  }
+
+  .theme-toggle-btn {
+    border-width: 2px;
+  }
+}
+
+/* 减少动画偏好支持 */
+@media (prefers-reduced-motion: reduce) {
+  .theme-card,
+  .font-option,
+  .theme-toggle-btn,
+  .panel-enter-active,
+  .panel-leave-active {
+    transition: none !important;
+  }
+
+  .theme-card:hover,
+  .font-option:hover {
+    transform: none !important;
+  }
 }
 </style>
+

@@ -1,0 +1,328 @@
+/* 🔘 按钮增强系统 - 确保在所有主题下都清晰可见 */
+
+/* VitePress 默认按钮增强 */
+.VPButton {
+  position: relative;
+  overflow: hidden;
+  font-weight: 600 !important;
+  letter-spacing: 0.025em;
+  box-shadow: var(--shadow-raised) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.VPButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent);
+  transition: left 0.5s ease;
+}
+
+.VPButton:hover::before {
+  left: 100%;
+}
+
+/* 主要按钮样式增强 */
+.VPButton.brand {
+  background: var(--theme-gradient-primary, var(--vp-c-brand)) !important;
+  border: 2px solid var(--theme-primary, var(--vp-c-brand)) !important;
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.VPButton.brand:hover {
+  background: var(--theme-secondary, var(--vp-c-brand-dark)) !important;
+  border-color: var(--theme-secondary, var(--vp-c-brand-dark)) !important;
+  box-shadow: var(--shadow-card) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 次要按钮样式增强 */
+.VPButton.alt {
+  background: var(--theme-surface, var(--vp-c-bg-soft)) !important;
+  border: 2px solid var(--theme-border, var(--vp-c-divider)) !important;
+  color: var(--theme-text, var(--vp-c-text-1)) !important;
+  backdrop-filter: blur(8px);
+}
+
+.VPButton.alt:hover {
+  background: var(--theme-primary, var(--vp-c-brand)) !important;
+  border-color: var(--theme-primary, var(--vp-c-brand)) !important;
+  color: white !important;
+  box-shadow: var(--shadow-card) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 首页英雄区按钮特殊处理 */
+.VPHero .actions .VPButton {
+  min-width: 140px;
+  padding: 12px 24px !important;
+  font-size: 16px !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.VPHero .actions .VPButton.brand {
+  background: var(--theme-primary, var(--vp-c-brand)) !important;
+  background-image: var(--theme-gradient-primary) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 700 !important;
+}
+
+.VPHero .actions .VPButton.alt {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  color: var(--theme-text, var(--vp-c-text-1)) !important;
+  font-weight: 600 !important;
+}
+
+/* 自定义按钮类 */
+.path-button {
+  display: inline-block !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  
+  /* 确保高对比度 */
+  background: var(--theme-primary, var(--vp-c-brand)) !important;
+  color: white !important;
+  border: 2px solid var(--theme-primary, var(--vp-c-brand)) !important;
+  box-shadow: var(--shadow-raised) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.path-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent);
+  transition: left 0.5s ease;
+}
+
+.path-button:hover {
+  background: var(--theme-secondary, var(--vp-c-brand-dark)) !important;
+  border-color: var(--theme-secondary, var(--vp-c-brand-dark)) !important;
+  box-shadow: var(--shadow-card) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  color: white !important;
+}
+
+.path-button:hover::before {
+  left: 100%;
+}
+
+.path-button:active {
+  transform: translateY(0) scale(1) !important;
+  box-shadow: var(--shadow-raised) !important;
+}
+
+/* 主题切换按钮增强 */
+.theme-toggle-btn {
+  background: var(--theme-surface, var(--vp-c-bg-soft)) !important;
+  border: 2px solid var(--theme-border, var(--vp-c-divider)) !important;
+  color: var(--theme-text, var(--vp-c-text-1)) !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  box-shadow: var(--shadow-raised) !important;
+  transition: all 0.2s ease !important;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--theme-primary, var(--vp-c-brand)) !important;
+  border-color: var(--theme-primary, var(--vp-c-brand)) !important;
+  color: white !important;
+  box-shadow: var(--shadow-card) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 导航栏按钮增强 */
+.VPNavBarMenuLink,
+.VPNavBarMenuGroup .VPMenuLink {
+  position: relative !important;
+  transition: all 0.2s ease !important;
+}
+
+.VPNavBarMenuLink:hover,
+.VPNavBarMenuGroup .VPMenuLink:hover {
+  background: var(--theme-surface, var(--vp-c-bg-soft)) !important;
+  color: var(--theme-primary, var(--vp-c-brand)) !important;
+  border-radius: 6px !important;
+  box-shadow: var(--shadow-raised) !important;
+}
+
+/* 侧边栏链接增强 */
+.VPSidebarItem .link {
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  border-radius: 6px !important;
+}
+
+.VPSidebarItem .link:hover {
+  background: var(--theme-surface, var(--vp-c-bg-soft)) !important;
+  color: var(--theme-primary, var(--vp-c-brand)) !important;
+  box-shadow: var(--shadow-raised) !important;
+  transform: translateX(4px) !important;
+}
+
+.VPSidebarItem .link.active {
+  background: var(--theme-primary, var(--vp-c-brand)) !important;
+  color: white !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* 搜索按钮增强 */
+.DocSearch-Button {
+  background: var(--theme-surface, var(--vp-c-bg-soft)) !important;
+  border: 2px solid var(--theme-border, var(--vp-c-divider)) !important;
+  color: var(--theme-text, var(--vp-c-text-1)) !important;
+  box-shadow: var(--shadow-raised) !important;
+  transition: all 0.2s ease !important;
+}
+
+.DocSearch-Button:hover {
+  background: var(--theme-primary, var(--vp-c-brand)) !important;
+  border-color: var(--theme-primary, var(--vp-c-brand)) !important;
+  color: white !important;
+  box-shadow: var(--shadow-card) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 分页按钮增强 */
+.pager-link {
+  background: var(--theme-surface, var(--vp-c-bg-soft)) !important;
+  border: 2px solid var(--theme-border, var(--vp-c-divider)) !important;
+  color: var(--theme-text, var(--vp-c-text-1)) !important;
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  box-shadow: var(--shadow-raised) !important;
+  transition: all 0.2s ease !important;
+}
+
+.pager-link:hover {
+  background: var(--theme-primary, var(--vp-c-brand)) !important;
+  border-color: var(--theme-primary, var(--vp-c-brand)) !important;
+  color: white !important;
+  box-shadow: var(--shadow-card) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 特殊主题按钮适配 */
+
+/* 暗色主题按钮增强 */
+.dark .VPButton.alt {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: var(--theme-text, var(--vp-c-text-1)) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.dark .path-button {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 景深主题特殊处理 */
+[data-theme="depth"] .VPButton,
+[data-theme="depth"] .path-button {
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15), 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="depth"] .VPButton:hover,
+[data-theme="depth"] .path-button:hover {
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.2), 
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 高对比度模式按钮增强 */
+@media (prefers-contrast: high) {
+  .VPButton,
+  .path-button,
+  .theme-toggle-btn {
+    border-width: 3px !important;
+    font-weight: 700 !important;
+  }
+  
+  .VPButton.brand,
+  .path-button {
+    background: var(--theme-text, var(--vp-c-text-1)) !important;
+    color: var(--theme-background, var(--vp-c-bg)) !important;
+    border-color: var(--theme-text, var(--vp-c-text-1)) !important;
+  }
+}
+
+/* 移动端按钮优化 */
+@media (max-width: 768px) {
+  .VPButton,
+  .path-button {
+    min-height: 44px !important; /* 触摸友好的最小尺寸 */
+    font-size: 16px !important;
+  }
+  
+  .VPHero .actions {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  
+  .VPHero .actions .VPButton {
+    width: 100% !important;
+    max-width: 280px !important;
+  }
+}
+
+/* 减少动画偏好支持 */
+@media (prefers-reduced-motion: reduce) {
+  .VPButton,
+  .path-button,
+  .theme-toggle-btn,
+  .VPNavBarMenuLink,
+  .VPSidebarItem .link,
+  .DocSearch-Button,
+  .pager-link {
+    transition: none !important;
+  }
+  
+  .VPButton:hover,
+  .path-button:hover {
+    transform: none !important;
+  }
+  
+  .VPButton::before,
+  .path-button::before {
+    display: none !important;
+  }
+}
+
+/* 焦点可访问性增强 */
+.VPButton:focus,
+.path-button:focus,
+.theme-toggle-btn:focus {
+  outline: 3px solid var(--theme-primary, var(--vp-c-brand)) !important;
+  outline-offset: 2px !important;
+  box-shadow: 
+    var(--shadow-card),
+    0 0 0 3px rgba(var(--theme-primary-rgb, 59, 130, 246), 0.3) !important;
+}

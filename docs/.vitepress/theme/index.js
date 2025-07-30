@@ -1,93 +1,103 @@
 import DefaultTheme from 'vitepress/theme'
-import { h } from 'vue'
 import './custom.css'
 import './theme-styles.css'
-import './custom-components.css'
-import './home.css'
-
-// 导入主题系统
-import { initTheme } from './themes.js'
-
-// 导入现有组件
-import SmartLearningPath from '../components/SmartLearningPath.vue'
-import GameifiedLearning from '../components/GameifiedLearning.vue'
-
-// 导入轻量级组件（可以直接在文章中使用）
-import MathFormula from '../components/MathFormula.vue'
-import SimpleChart from '../components/SimpleChart.vue'
-import Simple3D from '../components/Simple3D.vue'
-import Fallback3D from '../components/Fallback3D.vue'
-import StepByStepFormula from '../components/StepByStepFormula.vue'
-import GraphicReasoning from '../components/GraphicReasoning.vue'
-
-// 导入全局组件
+import './depth-system.css'
+import './button-enhancement.css'
+import './responsive-design.css'
+import './theme-animations.css'
+import Layout from './Layout.vue'
 import GlobalThemeSwitcher from '../components/GlobalThemeSwitcher.vue'
-import SimpleThemeSwitcher from '../components/SimpleThemeSwitcher.vue'
-import BackToTop from '../components/BackToTop.vue'
-import FeatureCard from './components/FeatureCard.vue'
+import ThemeSwitcher from '../components/ThemeSwitcher.vue'
+import ThemePreview from '../components/ThemePreview.vue'
+import { applyTheme, initTheme } from './themes.js'
 
 export default {
   extends: DefaultTheme,
-  Layout: () => {
-    return h(DefaultTheme.Layout, null, {
-      // 尝试不同的插槽位置
-      'nav-bar-content-after': () => h(GlobalThemeSwitcher),
-      'nav-screen-content-after': () => h(GlobalThemeSwitcher),
-      // 添加回到顶部按钮
-      'layout-bottom': () => h(BackToTop)
-    })
-  },
-  enhanceApp({ app, router }) {
-    // 初始化主题系统
-    if (typeof window !== 'undefined') {
-      // 确保在客户端环境下初始化主题
-      initTheme()
-
-      // 监听路由变化，确保主题在页面切换时保持
-      router.onAfterRouteChanged = () => {
-        setTimeout(() => {
-          initTheme()
-        }, 100)
-      }
-    }
-
-    // 注册现有组件
-    app.component('SmartLearningPath', SmartLearningPath)
-    app.component('GameifiedLearning', GameifiedLearning)
-
-    // 注册轻量级组件
-    app.component('MathFormula', MathFormula)
-    app.component('SimpleChart', SimpleChart)
-    app.component('Simple3D', Simple3D)
-    app.component('Fallback3D', Fallback3D)
-    app.component('StepByStepFormula', StepByStepFormula)
-    app.component('GraphicReasoning', GraphicReasoning)
+  Layout,
+  enhanceApp({ app }) {
+    // 注册主题组件
     app.component('GlobalThemeSwitcher', GlobalThemeSwitcher)
-    app.component('BackToTop', BackToTop)
-    app.component('FeatureCard', FeatureCard)
+    app.component('ThemeSwitcher', ThemeSwitcher)
+    app.component('ThemePreview', ThemePreview)
 
     // 初始化主题系统
     if (typeof window !== 'undefined') {
-      initTheme()
+      // 使用新的存储键名
+      const savedTheme = localStorage.getItem('selected-theme') || 'default'
+      applyTheme(savedTheme)
+      
+      // 系统主题跟随
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      const handleThemeChange = () => {
+        const autoTheme = localStorage.getItem('auto-theme')
+        if (autoTheme === 'true') {
+          applyTheme(mediaQuery.matches ? 'dark' : 'default')
+        }
+      }
 
-      // 动态导入复杂组件（避免SSR问题）
-      import('../components/Math3DVisualizer.vue').then(module => {
-        app.component('Math3DVisualizer', module.default)
-      }).catch(() => {
-        console.warn('Math3DVisualizer component failed to load')
+      mediaQuery.addEventListener('change', handleThemeChange)
+
+      // 全局方法
+      window.applyTheme = applyTheme
+
+      // 初始化字体
+      const savedFont = localStorage.getItem('selected-font') || 'inter'
+      const fonts = {
+        inter: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif',
+        noto: '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Source Han Sans SC", sans-serif',
+        system: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", sans-serif',
+        source: '"Source Sans Pro", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif',
+        poppins: '"Poppins", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif',
+        serif: 'Georgia, "Times New Roman", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif'
+      }
+
+      const selectedFontFamily = fonts[savedFont] || fonts.inter
+      document.documentElement.style.setProperty('--vp-font-family-base', selectedFontFamily)
+      document.documentElement.style.setProperty('--theme-font-primary', selectedFontFamily)
+
+      // 导航栏布局统一化处理
+      const fixNavbarLayout = () => {
+        const navbar = document.querySelector('.VPNavBar')
+        const content = document.querySelector('.VPContent')
+
+        if (navbar && content) {
+          // 检测页面类型
+          const isHome = document.querySelector('.VPHome')
+          const isDoc = document.querySelector('.VPDoc')
+
+          // 根据页面类型调整布局
+          if (isHome) {
+            // 首页布局 - 不需要顶部间距
+            content.style.paddingTop = '0'
+            document.body.classList.add('layout-home')
+            document.body.classList.remove('layout-doc', 'layout-page')
+          } else if (isDoc) {
+            // 文档布局 - 不需要顶部间距
+            content.style.paddingTop = '0'
+            document.body.classList.add('layout-doc')
+            document.body.classList.remove('layout-home', 'layout-page')
+          } else {
+            // 普通页面布局 - 需要顶部间距
+            const isMobile = window.innerWidth <= 768
+            content.style.paddingTop = isMobile ? '56px' : '64px'
+            document.body.classList.add('layout-page')
+            document.body.classList.remove('layout-home', 'layout-doc')
+          }
+        }
+      }
+
+      // 页面加载完成后执行
+      window.addEventListener('load', () => {
+        setTimeout(fixNavbarLayout, 100)
       })
 
-      import('../components/InteractiveFormula.vue').then(module => {
-        app.component('InteractiveFormula', module.default)
-      }).catch(() => {
-        console.warn('InteractiveFormula component failed to load')
+      // 路由变化时也执行
+      window.addEventListener('popstate', () => {
+        setTimeout(fixNavbarLayout, 100)
       })
 
-      import('../components/DataVisualization.vue').then(module => {
-        app.component('DataVisualization', module.default)
-      }).catch(() => {
-        console.warn('DataVisualization component failed to load')
-      })
+      // 窗口大小变化时重新调整
+      window.addEventListener('resize', fixNavbarLayout)
     }
   }
 }
