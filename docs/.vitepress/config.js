@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import container from 'markdown-it-container'
 
 export default defineConfig({
   title: "朝闻阁",
@@ -200,6 +201,150 @@ export default defineConfig({
       fs: {
         allow: ['..']
       }
+    }
+  },
+
+  // Markdown配置
+  markdown: {
+    math: true,
+    config: (md) => {
+      // 添加自定义容器来支持高级组件
+      md.use(container, 'formula-derivation', {
+        render: function (tokens, idx) {
+          const token = tokens[idx]
+          if (token.nesting === 1) {
+            // 开始标签 - 收集内容
+            let content = ''
+            let i = idx + 1
+
+            // 收集容器内的所有内容
+            while (i < tokens.length && !(tokens[i].type === 'container_formula-derivation_close')) {
+              if (tokens[i].type === 'inline') {
+                content += tokens[i].content
+              } else if (tokens[i].content) {
+                content += tokens[i].content
+              }
+              i++
+            }
+
+            // 清理和解析JSON配置
+            content = content.trim()
+            let config = '{}'
+
+            try {
+              if (content.startsWith('{') && content.endsWith('}')) {
+                // 验证JSON格式
+                const parsed = JSON.parse(content)
+                config = JSON.stringify(parsed) // 重新序列化确保格式正确
+              }
+            } catch (e) {
+              console.warn('Invalid JSON config for formula-derivation:', e.message)
+              // 提供默认配置
+              config = JSON.stringify({
+                title: "公式推导",
+                steps: [
+                  { formula: "x = 1", description: "示例公式" }
+                ]
+              })
+            }
+
+            // 转义引号以避免HTML属性问题
+            const escapedConfig = config.replace(/'/g, '&#39;').replace(/"/g, '&quot;')
+
+            return `<FormulaDerivation :config="${escapedConfig}" />`
+          } else {
+            return ''
+          }
+        }
+      })
+
+      md.use(container, 'interactive-chart', {
+        render: function (tokens, idx) {
+          const token = tokens[idx]
+          if (token.nesting === 1) {
+            // 开始标签 - 收集内容
+            let content = ''
+            let i = idx + 1
+
+            // 收集容器内的所有内容
+            while (i < tokens.length && !(tokens[i].type === 'container_interactive-chart_close')) {
+              if (tokens[i].type === 'inline') {
+                content += tokens[i].content
+              } else if (tokens[i].content) {
+                content += tokens[i].content
+              }
+              i++
+            }
+
+            // 清理和解析JSON配置
+            content = content.trim()
+            let config = '{}'
+
+            try {
+              if (content.startsWith('{') && content.endsWith('}')) {
+                const parsed = JSON.parse(content)
+                config = JSON.stringify(parsed)
+              }
+            } catch (e) {
+              console.warn('Invalid JSON config for interactive-chart:', e.message)
+              // 提供默认配置
+              config = JSON.stringify({
+                title: "示例图表",
+                type: "bar",
+                data: {
+                  categories: ["A", "B", "C"],
+                  series: [10, 20, 30]
+                }
+              })
+            }
+
+            // 转义引号
+            const escapedConfig = config.replace(/'/g, '&#39;').replace(/"/g, '&quot;')
+
+            return `<InteractiveChart :config="${escapedConfig}" />`
+          } else {
+            return ''
+          }
+        }
+      })
+
+      md.use(container, 'graphic-reasoning', {
+        render: function (tokens, idx) {
+          const token = tokens[idx]
+          if (token.nesting === 1) {
+            const title = token.info.trim().slice('graphic-reasoning'.length).trim()
+            const configMatch = tokens[idx + 2]?.content.match(/^(\{[\s\S]*\})$/)
+            const config = configMatch ? configMatch[1] : '{}'
+
+            return `<div class="graphic-reasoning-container">
+              <h3>${title}</h3>
+              <div class="config-data" style="display: none;">${config}</div>
+              <p>图形推理组件开发中...</p>
+            </div>`
+          } else {
+            return ''
+          }
+        }
+      })
+
+      md.use(container, '3d-visualization', {
+        render: function (tokens, idx) {
+          const token = tokens[idx]
+          if (token.nesting === 1) {
+            const title = token.info.trim().slice('3d-visualization'.length).trim()
+            const configMatch = tokens[idx + 2]?.content.match(/^(\{[\s\S]*\})$/)
+            const config = configMatch ? configMatch[1] : '{}'
+
+            return `<div class="3d-visualization-container">
+              <h3>${title}</h3>
+              <div class="config-data" style="display: none;">${config}</div>
+              <p>3D可视化组件开发中...</p>
+            </div>`
+          } else {
+            return ''
+          }
+        }
+      })
     }
   }
 })

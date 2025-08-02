@@ -18,6 +18,12 @@ const routes = [
     meta: { title: '可视化编辑器' }
   },
   {
+    path: '/enhanced-editor',
+    name: 'EnhancedEditor',
+    component: () => import('@/components/VisualEditor/EnhancedEditor.vue'),
+    meta: { title: '增强版编辑器' }
+  },
+  {
     path: '/powerful-editor',
     name: 'PowerfulVitePressEditor',
     component: () => import('@/views/PowerfulVitePressEditor.vue'),
@@ -52,6 +58,12 @@ const routes = [
     name: 'NotificationCenter',
     component: () => import('@/views/NotificationCenter.vue'),
     meta: { title: '通知中心' }
+  },
+  {
+    path: '/editor-test',
+    name: 'EditorTest',
+    component: () => import('@/views/EditorTest.vue'),
+    meta: { title: '编辑器测试' }
   }
 ]
 

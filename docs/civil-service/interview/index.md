@@ -1,19 +1,7 @@
 # 公务员面试111
 
 ::: formula-derivation 公式推导示例
-{
-  "title": "二次方程求解",
-  "steps": [
-    {
-      "description": "标准形式",
-      "formula": "ax^2 + bx + c = 0"
-    },
-    {
-      "description": "求解公式",
-      "formula": "x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}"
-    }
-  ]
-}
+{"title": "二次方程求解", "steps": [{"description": "标准形式", "formula": "ax^2 + bx + c = 0"}, {"description": "求解公式", "formula": "x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}"}]}
 :::
 
 ## 📖 面试概述

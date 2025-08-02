@@ -57,7 +57,13 @@
 
             <el-menu-item index="/powerful-editor" class="menu-item-enhanced">
               <el-icon><EditPen /></el-icon>
-              <span>文档编辑器</span>
+              <span>VitePress编辑器</span>
+            </el-menu-item>
+
+            <el-menu-item index="/enhanced-editor" class="menu-item-enhanced">
+              <el-icon><Star /></el-icon>
+              <span>增强版编辑器</span>
+              <div class="menu-badge">PRO</div>
             </el-menu-item>
 
             <el-menu-item index="/visual-editor" class="menu-item-enhanced">
@@ -108,6 +114,12 @@
             <el-menu-item index="/logs" class="menu-item-enhanced">
               <el-icon><Document /></el-icon>
               <span>日志</span>
+            </el-menu-item>
+
+            <el-menu-item index="/editor-test" class="menu-item-enhanced">
+              <el-icon><Setting /></el-icon>
+              <span>编辑器测试</span>
+              <div class="menu-badge">TEST</div>
             </el-menu-item>
           </el-menu>
         </div>
@@ -179,6 +191,7 @@ import {
   DataBoard,
   EditPen,
   Brush,
+  Star,
   FolderOpened,
   Grid,
   Setting,

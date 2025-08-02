@@ -76,17 +76,50 @@
         <div class="tool-group">
           <span class="group-title">操作</span>
           <el-button-group>
-            <el-button @click="copySelected" :disabled="!selectedObject" title="复制">
+            <el-button @click="undoAction" :disabled="!canUndo" title="撤销 (Ctrl+Z)">
+              <el-icon><RefreshLeft /></el-icon>
+            </el-button>
+            <el-button @click="redoAction" :disabled="!canRedo" title="重做 (Ctrl+Y)">
+              <el-icon><RefreshRight /></el-icon>
+            </el-button>
+            <el-button @click="copySelected" :disabled="!selectedObject" title="复制 (Ctrl+C)">
               <el-icon><CopyDocument /></el-icon>
             </el-button>
-            <el-button @click="deleteSelected" :disabled="!selectedObject" title="删除">
+            <el-button @click="pasteObject" :disabled="!clipboardData" title="粘贴 (Ctrl+V)">
+              <el-icon><DocumentCopy /></el-icon>
+            </el-button>
+            <el-button @click="deleteSelected" :disabled="!selectedObject" title="删除 (Delete)">
               <el-icon><Delete /></el-icon>
             </el-button>
-            <el-button @click="groupObjects" :disabled="!canGroup" title="组合">
+            <el-button @click="groupObjects" :disabled="!canGroup" title="组合 (Ctrl+G)">
               <el-icon><Connection /></el-icon>
             </el-button>
-            <el-button @click="ungroupObjects" :disabled="!canUngroup" title="取消组合">
+            <el-button @click="ungroupObjects" :disabled="!canUngroup" title="取消组合 (Ctrl+Shift+G)">
               <el-icon><Remove /></el-icon>
+            </el-button>
+          </el-button-group>
+        </div>
+
+        <div class="tool-group">
+          <span class="group-title">对齐</span>
+          <el-button-group>
+            <el-button @click="alignLeft" :disabled="!multipleSelected" title="左对齐">
+              <el-icon><ArrowLeft /></el-icon>
+            </el-button>
+            <el-button @click="alignCenter" :disabled="!multipleSelected" title="居中对齐">
+              <el-icon><Sort /></el-icon>
+            </el-button>
+            <el-button @click="alignRight" :disabled="!multipleSelected" title="右对齐">
+              <el-icon><ArrowRight /></el-icon>
+            </el-button>
+            <el-button @click="alignTop" :disabled="!multipleSelected" title="顶部对齐">
+              <el-icon><ArrowUp /></el-icon>
+            </el-button>
+            <el-button @click="alignMiddle" :disabled="!multipleSelected" title="垂直居中">
+              <el-icon><Sort /></el-icon>
+            </el-button>
+            <el-button @click="alignBottom" :disabled="!multipleSelected" title="底部对齐">
+              <el-icon><ArrowDown /></el-icon>
             </el-button>
           </el-button-group>
         </div>
@@ -96,6 +129,12 @@
           <el-button-group>
             <el-button @click="bringToFront" :disabled="!selectedObject" title="置于顶层">
               <el-icon><Top /></el-icon>
+            </el-button>
+            <el-button @click="bringForward" :disabled="!selectedObject" title="向前一层">
+              <el-icon><ArrowUp /></el-icon>
+            </el-button>
+            <el-button @click="sendBackward" :disabled="!selectedObject" title="向后一层">
+              <el-icon><ArrowDown /></el-icon>
             </el-button>
             <el-button @click="sendToBack" :disabled="!selectedObject" title="置于底层">
               <el-icon><Bottom /></el-icon>
@@ -242,6 +281,7 @@ import {
   CopyDocument,
   Delete,
   RefreshLeft,
+  RefreshRight,
   Top,
   Bottom,
   View,
@@ -250,7 +290,14 @@ import {
   Remove,
   ZoomIn,
   ZoomOut,
-  FullScreen
+  FullScreen,
+  DocumentCopy,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Plus,
+  Sort
 } from '@element-plus/icons-vue'
 
 // 基础形状定义

@@ -78,6 +78,14 @@
             <el-icon><QuestionFilled /></el-icon>
             语法帮助
           </el-button>
+          <el-button size="small" @click="undoEdit" :disabled="!canUndo">
+            <el-icon><RefreshLeft /></el-icon>
+            撤销
+          </el-button>
+          <el-button size="small" @click="redoEdit" :disabled="!canRedo">
+            <el-icon><RefreshRight /></el-icon>
+            重做
+          </el-button>
           <el-button size="small" @click="clearCurrentStep">
             <el-icon><Delete /></el-icon>
             清空
@@ -85,6 +93,10 @@
           <el-button size="small" @click="formatLatex">
             <el-icon><Tools /></el-icon>
             格式化
+          </el-button>
+          <el-button size="small" @click="toggleLivePreview" :type="livePreview ? 'primary' : 'default'">
+            <el-icon><View /></el-icon>
+            实时预览
           </el-button>
         </el-button-group>
       </div>
@@ -353,7 +365,13 @@ import {
   ArrowLeft,
   ArrowRight,
   QuestionFilled,
-  Tools
+  Tools,
+  RefreshLeft,
+  RefreshRight,
+  View,
+  Download,
+  Upload,
+  Setting
 } from '@element-plus/icons-vue'
 
 // 符号定义
@@ -373,12 +391,29 @@ const basicSymbols = [
 const operators = [
   { name: '分数', latex: '\\frac{a}{b}', display: '𝑎/𝑏' },
   { name: '根号', latex: '\\sqrt{x}', display: '√' },
+  { name: 'n次根', latex: '\\sqrt[n]{x}', display: 'ⁿ√' },
   { name: '上标', latex: 'x^{n}', display: 'xⁿ' },
   { name: '下标', latex: 'x_{n}', display: 'xₙ' },
   { name: '求和', latex: '\\sum_{i=1}^{n}', display: 'Σ' },
+  { name: '连乘', latex: '\\prod_{i=1}^{n}', display: 'Π' },
   { name: '积分', latex: '\\int_{a}^{b}', display: '∫' },
+  { name: '二重积分', latex: '\\iint', display: '∬' },
+  { name: '三重积分', latex: '\\iiint', display: '∭' },
+  { name: '环积分', latex: '\\oint', display: '∮' },
   { name: '极限', latex: '\\lim_{x \\to \\infty}', display: 'lim' },
-  { name: '偏导', latex: '\\frac{\\partial}{\\partial x}', display: '∂' }
+  { name: '偏导', latex: '\\frac{\\partial}{\\partial x}', display: '∂' },
+  { name: '梯度', latex: '\\nabla', display: '∇' },
+  { name: '拉普拉斯', latex: '\\Delta', display: 'Δ' },
+  { name: '无穷大', latex: '\\infty', display: '∞' },
+  { name: '约等于', latex: '\\approx', display: '≈' },
+  { name: '恒等于', latex: '\\equiv', display: '≡' },
+  { name: '正比于', latex: '\\propto', display: '∝' },
+  { name: '属于', latex: '\\in', display: '∈' },
+  { name: '不属于', latex: '\\notin', display: '∉' },
+  { name: '包含', latex: '\\subset', display: '⊂' },
+  { name: '包含等于', latex: '\\subseteq', display: '⊆' },
+  { name: '并集', latex: '\\cup', display: '∪' },
+  { name: '交集', latex: '\\cap', display: '∩' }
 ]
 
 const functions = [
@@ -422,53 +457,171 @@ const greekLetters = [
   { name: 'Omega', latex: '\\omega', display: 'ω' }
 ]
 
-// 公式模板
+// 公式模板 - 大幅扩展
 const formulaTemplates = [
+  // 基础代数
   {
     name: '二次公式',
     latex: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
-    description: '一元二次方程求根公式'
+    description: '一元二次方程求根公式',
+    category: 'algebra'
   },
   {
     name: '勾股定理',
     latex: 'a^2 + b^2 = c^2',
-    description: '直角三角形勾股定理'
+    description: '直角三角形勾股定理',
+    category: 'geometry'
   },
   {
-    name: '欧拉公式',
-    latex: 'e^{i\\pi} + 1 = 0',
-    description: '欧拉恒等式'
+    name: '因式分解',
+    latex: 'a^2 - b^2 = (a+b)(a-b)',
+    description: '平方差公式',
+    category: 'algebra'
   },
+  {
+    name: '完全平方',
+    latex: '(a \\pm b)^2 = a^2 \\pm 2ab + b^2',
+    description: '完全平方公式',
+    category: 'algebra'
+  },
+
+  // 微积分
   {
     name: '导数定义',
     latex: 'f\'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}',
-    description: '函数导数的定义'
+    description: '函数导数的定义',
+    category: 'calculus'
   },
   {
     name: '积分公式',
     latex: '\\int_a^b f(x) dx = F(b) - F(a)',
-    description: '定积分基本定理'
+    description: '定积分基本定理',
+    category: 'calculus'
   },
+  {
+    name: '分部积分',
+    latex: '\\int u dv = uv - \\int v du',
+    description: '分部积分公式',
+    category: 'calculus'
+  },
+  {
+    name: '换元积分',
+    latex: '\\int f(g(x))g\'(x)dx = \\int f(u)du',
+    description: '第一类换元积分法',
+    category: 'calculus'
+  },
+
+  // 级数和展开
   {
     name: '泰勒展开',
     latex: 'f(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(a)}{n!}(x-a)^n',
-    description: '泰勒级数展开'
+    description: '泰勒级数展开',
+    category: 'series'
   },
+  {
+    name: '麦克劳林展开',
+    latex: 'f(x) = \\sum_{n=0}^{\\infty} \\frac{f^{(n)}(0)}{n!}x^n',
+    description: '麦克劳林级数展开',
+    category: 'series'
+  },
+  {
+    name: '几何级数',
+    latex: '\\sum_{n=0}^{\\infty} ar^n = \\frac{a}{1-r}, \\quad |r| < 1',
+    description: '无穷几何级数求和',
+    category: 'series'
+  },
+
+  // 概率统计
   {
     name: '正态分布',
     latex: 'f(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}} e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}',
-    description: '正态分布概率密度函数'
+    description: '正态分布概率密度函数',
+    category: 'statistics'
   },
+  {
+    name: '贝叶斯定理',
+    latex: 'P(A|B) = \\frac{P(B|A)P(A)}{P(B)}',
+    description: '贝叶斯条件概率公式',
+    category: 'statistics'
+  },
+  {
+    name: '期望值',
+    latex: 'E[X] = \\sum_{i} x_i P(X = x_i)',
+    description: '离散随机变量期望值',
+    category: 'statistics'
+  },
+  {
+    name: '方差',
+    latex: 'Var(X) = E[X^2] - (E[X])^2',
+    description: '随机变量方差公式',
+    category: 'statistics'
+  },
+
+  // 线性代数
   {
     name: '矩阵乘法',
     latex: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} \\begin{pmatrix} e & f \\\\ g & h \\end{pmatrix} = \\begin{pmatrix} ae+bg & af+bh \\\\ ce+dg & cf+dh \\end{pmatrix}',
-    description: '2x2矩阵乘法'
+    description: '2x2矩阵乘法',
+    category: 'linear_algebra'
+  },
+  {
+    name: '行列式',
+    latex: '\\det(A) = \\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix} = ad - bc',
+    description: '2x2矩阵行列式',
+    category: 'linear_algebra'
+  },
+  {
+    name: '特征值',
+    latex: 'Av = \\lambda v',
+    description: '矩阵特征值方程',
+    category: 'linear_algebra'
+  },
+
+  // 复分析
+  {
+    name: '欧拉公式',
+    latex: 'e^{i\\theta} = \\cos\\theta + i\\sin\\theta',
+    description: '欧拉复数公式',
+    category: 'complex'
+  },
+  {
+    name: '欧拉恒等式',
+    latex: 'e^{i\\pi} + 1 = 0',
+    description: '最美数学公式',
+    category: 'complex'
+  },
+
+  // 物理公式
+  {
+    name: '牛顿第二定律',
+    latex: 'F = ma',
+    description: '力等于质量乘以加速度',
+    category: 'physics'
+  },
+  {
+    name: '能量守恒',
+    latex: 'E = mc^2',
+    description: '爱因斯坦质能方程',
+    category: 'physics'
+  },
+  {
+    name: '薛定谔方程',
+    latex: 'i\\hbar\\frac{\\partial}{\\partial t}\\Psi = \\hat{H}\\Psi',
+    description: '量子力学基本方程',
+    category: 'physics'
   }
 ]
 
 // 响应式数据
 const activeSymbolTab = ref('basic')
 const showHelpDialog = ref(false)
+const livePreview = ref(true)
+const canUndo = ref(false)
+const canRedo = ref(false)
+
+// 编辑历史管理
+const editHistory = ref([])
+const historyIndex = ref(-1)
 
 const formulaConfig = reactive({
   title: '公式推导示例'
@@ -509,18 +662,46 @@ const initMonacoEditor = async () => {
 
     monacoEditor.value = monaco.editor.create(monacoContainer.value, {
       value: formulaSteps.value[selectedStepIndex.value]?.formula || '',
-      language: 'plaintext', // 改为plaintext，因为latex可能不被支持
+      language: 'latex', // 使用LaTeX语言支持
       theme: 'vs',
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
-      fontSize: 14,
+      fontSize: 16,
       lineNumbers: 'off',
       glyphMargin: false,
       folding: false,
       lineDecorationsWidth: 0,
       lineNumbersMinChars: 0,
       wordWrap: 'on',
-      automaticLayout: true
+      automaticLayout: true,
+      // 增强功能
+      suggestOnTriggerCharacters: true,
+      quickSuggestions: true,
+      parameterHints: { enabled: true },
+      autoIndent: 'full',
+      formatOnPaste: true,
+      formatOnType: true,
+      // 快捷键
+      contextmenu: true,
+      selectOnLineNumbers: false,
+      // 自动补全
+      acceptSuggestionOnCommitCharacter: true,
+      acceptSuggestionOnEnter: 'on',
+      tabCompletion: 'on'
+    })
+
+    // 监听内容变化
+    monacoEditor.value.onDidChangeModelContent(() => {
+      const content = monacoEditor.value.getValue()
+      formulaSteps.value[selectedStepIndex.value].formula = content
+
+      // 保存到历史
+      saveToHistory(content)
+
+      // 实时预览
+      if (livePreview.value) {
+        updatePreview()
+      }
     })
 
     // 监听内容变化
@@ -555,17 +736,94 @@ const insertFunction = (latex) => {
   insertSymbol(latex)
 }
 
-// 渲染公式
+// 渲染公式 - 增强版
 const renderFormula = (formula) => {
   if (!formula) return ''
-  
+
   try {
     return katex.renderToString(formula, {
       throwOnError: false,
-      displayMode: true
+      displayMode: true,
+      strict: false,
+      trust: true,
+      macros: {
+        "\\RR": "\\mathbb{R}",
+        "\\NN": "\\mathbb{N}",
+        "\\ZZ": "\\mathbb{Z}",
+        "\\QQ": "\\mathbb{Q}",
+        "\\CC": "\\mathbb{C}"
+      }
     })
   } catch (error) {
-    return `<span class="formula-error">公式错误: ${error.message}</span>`
+    console.warn('KaTeX渲染错误:', error)
+    return `<span class="formula-error">公式语法错误: ${error.message}</span>`
+  }
+}
+
+// 测试KaTeX是否正常工作
+const testKaTeX = () => {
+  try {
+    const testFormula = 'x^2 + y^2 = z^2'
+    const result = katex.renderToString(testFormula, { throwOnError: false })
+    console.log('✅ KaTeX测试成功:', result ? '渲染正常' : '渲染失败')
+    return true
+  } catch (error) {
+    console.error('❌ KaTeX测试失败:', error)
+    return false
+  }
+}
+
+// 保存编辑历史
+const saveToHistory = (content) => {
+  // 移除当前位置之后的历史
+  editHistory.value = editHistory.value.slice(0, historyIndex.value + 1)
+
+  // 添加新的历史记录
+  editHistory.value.push(content)
+  historyIndex.value = editHistory.value.length - 1
+
+  // 限制历史记录数量
+  if (editHistory.value.length > 50) {
+    editHistory.value.shift()
+    historyIndex.value--
+  }
+
+  // 更新撤销重做状态
+  canUndo.value = historyIndex.value > 0
+  canRedo.value = historyIndex.value < editHistory.value.length - 1
+}
+
+// 撤销编辑
+const undoEdit = () => {
+  if (canUndo.value && monacoEditor.value) {
+    historyIndex.value--
+    const content = editHistory.value[historyIndex.value]
+    monacoEditor.value.setValue(content)
+    updateHistoryState()
+  }
+}
+
+// 重做编辑
+const redoEdit = () => {
+  if (canRedo.value && monacoEditor.value) {
+    historyIndex.value++
+    const content = editHistory.value[historyIndex.value]
+    monacoEditor.value.setValue(content)
+    updateHistoryState()
+  }
+}
+
+// 更新历史状态
+const updateHistoryState = () => {
+  canUndo.value = historyIndex.value > 0
+  canRedo.value = historyIndex.value < editHistory.value.length - 1
+}
+
+// 切换实时预览
+const toggleLivePreview = () => {
+  livePreview.value = !livePreview.value
+  if (livePreview.value) {
+    updatePreview()
   }
 }
 
@@ -653,6 +911,9 @@ const updatePreview = () => {
 
 // 生命周期
 onMounted(async () => {
+  // 测试KaTeX是否正常工作
+  testKaTeX()
+
   // 等待DOM完全渲染
   await nextTick()
 

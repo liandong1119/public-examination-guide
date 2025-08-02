@@ -31,6 +31,15 @@
           <el-button @click="toggleTheme" size="small">
             {{ editorTheme === 'vs-dark' ? '☀️ 浅色' : '🌙 深色' }}
           </el-button>
+          <el-button @click="showComponentDialog = true" size="small" type="success">
+            🧩 插入组件
+          </el-button>
+          <el-button @click="showAdvancedComponentDialog = true" size="small" type="warning">
+            ⭐ 高级组件
+          </el-button>
+          <el-button @click="editSelectedComponent" size="small" type="info" :disabled="!selectedComponentInfo">
+            ✏️ 编辑组件
+          </el-button>
         </div>
       </div>
     </div>
@@ -167,6 +176,21 @@
       v-model="showComponentDialog"
       @insert="insertComponent" />
 
+    <!-- 高级组件管理对话框 -->
+    <AdvancedComponentDialog
+      v-model="showAdvancedComponentDialog"
+      :current-document="currentFile?.path"
+      :document-content="documentContent"
+      @insert="insertAdvancedComponent"
+      @edit="editAdvancedComponent" />
+
+    <!-- 组件编辑器对话框 -->
+    <ComponentEditorDialog
+      v-model="showComponentEditorDialog"
+      :component-data="editingComponentData"
+      @save="saveComponentEdit"
+      @cancel="cancelComponentEdit" />
+
     <!-- 快捷键帮助对话框 -->
     <KeyboardShortcutsDialog
       v-model="showShortcutsDialog" />
@@ -217,6 +241,8 @@ import { Menu, Document } from '@element-plus/icons-vue'
 import EnhancedMonacoEditor from '@/components/EnhancedMonacoEditor.vue'
 import MarkdownPreview from '@/components/MarkdownPreview.vue'
 import ComponentInsertDialog from '@/components/ComponentInsertDialog.vue'
+import AdvancedComponentDialog from '@/components/AdvancedComponentDialog.vue'
+import ComponentEditorDialog from '@/components/ComponentEditorDialog.vue'
 import KeyboardShortcutsDialog from '@/components/KeyboardShortcutsDialog.vue'
 import EnhancedFileTree from '@/components/EnhancedFileTree.vue'
 import MarkdownSyntaxHelper from '@/components/MarkdownSyntaxHelper.vue'
@@ -239,8 +265,12 @@ const isAutoSaving = ref(false)
 const lastSaveTime = ref(null)
 const editorTheme = ref('vs-dark')
 const showComponentDialog = ref(false)
+const showAdvancedComponentDialog = ref(false)
+const showComponentEditorDialog = ref(false)
 const showShortcutsDialog = ref(false)
 const showSyntaxHelper = ref(false)
+const selectedComponentInfo = ref(null)
+const editingComponentData = ref(null)
 const layoutMode = ref('horizontal') // horizontal, vertical
 const showOutlineDialog = ref(false)
 const showSearchDialog = ref(false)
@@ -925,8 +955,132 @@ const insertComponent = (componentData) => {
   if (monacoEditor.value && monacoEditor.value.insertText) {
     monacoEditor.value.insertText(componentData.template)
     ElMessage.success(`已插入${componentData.name}组件`)
+
+    // 自动保存文档
+    setTimeout(() => {
+      saveDocument()
+    }, 500)
   }
 }
+
+// 插入高级组件
+const insertAdvancedComponent = (componentData) => {
+  if (monacoEditor.value && monacoEditor.value.insertText) {
+    const componentMarkdown = generateAdvancedComponentMarkdown(componentData)
+    monacoEditor.value.insertText(componentMarkdown)
+    ElMessage.success(`已插入${componentData.name}高级组件`)
+
+    // 自动保存并刷新预览
+    setTimeout(() => {
+      saveDocument()
+      refreshPreview()
+    }, 500)
+  }
+}
+
+// 编辑选中的组件
+const editSelectedComponent = () => {
+  if (!selectedComponentInfo.value) {
+    ElMessage.warning('请先选择一个组件')
+    return
+  }
+
+  // 解析组件数据
+  const componentData = parseComponentFromMarkdown(selectedComponentInfo.value)
+  editingComponentData.value = componentData
+  showComponentEditorDialog.value = true
+}
+
+// 编辑高级组件
+const editAdvancedComponent = (componentData) => {
+  editingComponentData.value = componentData
+  showComponentEditorDialog.value = true
+}
+
+// 保存组件编辑
+const saveComponentEdit = (updatedComponentData) => {
+  if (!editingComponentData.value) return
+
+  // 在文档中替换组件
+  const newMarkdown = generateAdvancedComponentMarkdown(updatedComponentData)
+  const oldMarkdown = editingComponentData.value.originalMarkdown
+
+  if (monacoEditor.value) {
+    const content = monacoEditor.value.getValue()
+    const newContent = content.replace(oldMarkdown, newMarkdown)
+    monacoEditor.value.setValue(newContent)
+
+    ElMessage.success('组件更新成功')
+    showComponentEditorDialog.value = false
+    editingComponentData.value = null
+
+    // 自动保存
+    setTimeout(() => {
+      saveDocument()
+      refreshPreview()
+    }, 500)
+  }
+}
+
+// 取消组件编辑
+const cancelComponentEdit = () => {
+  showComponentEditorDialog.value = false
+  editingComponentData.value = null
+}
+
+// 生成高级组件Markdown
+const generateAdvancedComponentMarkdown = (componentData) => {
+  const { type, title, config } = componentData
+
+  switch (type) {
+    case 'formula-derivation':
+      return `::: formula-derivation ${title}
+${JSON.stringify(config, null, 2)}
+:::`
+
+    case 'graphic-reasoning':
+      return `::: graphic-reasoning ${title}
+${JSON.stringify(config, null, 2)}
+:::`
+
+    case '3d-visualization':
+      return `::: 3d-visualization ${title}
+${JSON.stringify(config, null, 2)}
+:::`
+
+    case 'interactive-chart':
+      return `::: interactive-chart ${title}
+${JSON.stringify(config, null, 2)}
+:::`
+
+    default:
+      return `::: ${type} ${title}
+${JSON.stringify(config, null, 2)}
+:::`
+  }
+}
+
+// 从Markdown解析组件数据
+const parseComponentFromMarkdown = (componentInfo) => {
+  // 这里实现从Markdown文本解析组件数据的逻辑
+  const { text, line } = componentInfo
+
+  // 简单的解析逻辑，实际应该更复杂
+  const match = text.match(/::: (\w+) (.+)/)
+  if (match) {
+    return {
+      type: match[1],
+      title: match[2],
+      config: {},
+      originalMarkdown: text,
+      line: line
+    }
+  }
+
+  return null
+}
+
+// refreshPreview 已在上面定义，删除重复声明
 
 const formatTime = (date) => {
   if (!date) return ''

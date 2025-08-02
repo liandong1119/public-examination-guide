@@ -1643,15 +1643,48 @@ html, body {
   .VPFooter {
     display: none !important;
   }
-  
+
   .VPContent {
     margin: 0 !important;
     padding: 0 !important;
   }
-  
+
   .exam-card {
     break-inside: avoid;
     box-shadow: none;
     border: 1px solid #ccc;
+  }
+}
+
+/* 🔧 隐藏高级组件后的JSON配置显示 */
+.formula-derivation-container + p,
+.interactive-chart-container + p,
+.graphic-reasoning-container + p {
+  display: none !important;
+}
+
+/* 隐藏包含JSON配置的段落 */
+.vp-doc p:has(code:only-child) {
+  display: none !important;
+}
+
+/* 隐藏纯JSON内容的段落 */
+.vp-doc p code:only-child {
+  display: none !important;
+}
+
+/* 更精确的隐藏规则 - 隐藏包含组件配置的段落 */
+.vp-doc p {
+  &:has(code[class*="language-"]:only-child) {
+    display: none !important;
+  }
+}
+
+/* 隐藏包含JSON配置的代码块 */
+.vp-doc p code {
+  &:only-child {
+    &:contains('{"title"') {
+      display: none !important;
+    }
   }
 }

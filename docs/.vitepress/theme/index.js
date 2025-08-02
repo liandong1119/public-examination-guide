@@ -1,5 +1,9 @@
 import DefaultTheme from 'vitepress/theme'
 import './custom.css'
+
+// 导入高级组件
+import FormulaDerivation from './components/FormulaDerivation.vue'
+import InteractiveChart from './components/InteractiveChart.vue'
 import './theme-styles.css'
 import './depth-system.css'
 import './button-enhancement.css'
@@ -21,6 +25,10 @@ export default {
     app.component('GlobalThemeSwitcher', GlobalThemeSwitcher)
     app.component('ThemeSwitcher', ThemeSwitcher)
     app.component('ThemePreview', ThemePreview)
+
+    // 注册高级组件
+    app.component('FormulaDerivation', FormulaDerivation)
+    app.component('InteractiveChart', InteractiveChart)
 
     // 初始化主题系统
     if (typeof window !== 'undefined') {
