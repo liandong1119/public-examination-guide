@@ -1,5 +1,58 @@
 <template>
-  <Layout>
+  <!-- 强制拦截404页面 -->
+  <div v-if="is404Page" class="custom-404-override">
+    <div class="custom-404-container">
+      <div class="custom-404-hero">
+        <h1 class="custom-404-title">🚨 404 🚨</h1>
+        <h2 class="custom-404-subtitle">朝闻阁 - 页面走丢了</h2>
+        <p class="custom-404-message">
+          看起来这个页面正在图书馆里找不到回家的路... 🤔<br>
+          不如我们一起回到学习的正轨上吧！
+        </p>
+        <div class="custom-404-actions">
+          <a href="/" class="custom-404-btn primary">🏠 回到首页</a>
+          <a href="/civil-service/" class="custom-404-btn secondary">📚 开始学习</a>
+          <a href="/theme-showcase" class="custom-404-btn secondary">🎨 主题展示</a>
+        </div>
+      </div>
+
+      <div class="custom-404-features">
+        <h3>📚 快速导航</h3>
+        <div class="custom-404-grid">
+          <a href="/civil-service/" class="custom-404-card">
+            <div class="custom-404-icon">🏛️</div>
+            <h4>公务员考试</h4>
+            <p>行测申论相关笔记</p>
+          </a>
+          <a href="/public-institution/" class="custom-404-card">
+            <div class="custom-404-icon">🏢</div>
+            <h4>事业单位</h4>
+            <p>公基专业知识整理</p>
+          </a>
+          <a href="/teacher/" class="custom-404-card">
+            <div class="custom-404-icon">👨‍🏫</div>
+            <h4>教师编制</h4>
+            <p>教育理论学习心得</p>
+          </a>
+          <a href="/guide/" class="custom-404-card">
+            <div class="custom-404-icon">📚</div>
+            <h4>备考心得</h4>
+            <p>学习方法和经验分享</p>
+          </a>
+        </div>
+      </div>
+
+      <div class="custom-404-notice">
+        <blockquote>
+          "朝闻道，夕死可矣" —— 即使迷路了，学习的脚步也不能停下
+        </blockquote>
+        <p class="custom-404-success">✅ 自定义404页面已成功绕过VitePress限制！</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 正常页面布局 -->
+  <Layout v-else>
     <!-- 在导航栏内容后添加主题切换器 -->
     <template #nav-bar-content-after>
       <div class="nav-theme-switcher">
@@ -91,10 +144,31 @@
 
 <script setup>
 import DefaultTheme from 'vitepress/theme'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useData } from 'vitepress'
 import { getThemeList, applyTheme, getCurrentTheme } from './themes.js'
 
 const { Layout } = DefaultTheme
+const { page, frontmatter } = useData()
+
+// 检测404页面
+const is404Page = computed(() => {
+  // 检查多种404情况
+  const path = typeof window !== 'undefined' ? window.location.pathname : ''
+  const title = page.value?.title || ''
+  const pageTitle = frontmatter.value?.title || ''
+
+  // 检测条件
+  const isNotFoundPath = path.includes('404') || path === '/404' || path === '/404.html'
+  const isNotFoundTitle = title.includes('404') || title.includes('Not Found') || title.includes('PAGE NOT FOUND')
+  const isNotFoundFrontmatter = pageTitle.includes('404') || pageTitle.includes('Not Found')
+  const isEmptyPage = !title && !pageTitle && !page.value?.frontmatter?.layout
+
+  // VitePress默认404页面检测
+  const isDefaultNotFound = title === '404' || title === 'PAGE NOT FOUND'
+
+  return isNotFoundPath || isNotFoundTitle || isNotFoundFrontmatter || isEmptyPage || isDefaultNotFound
+})
 
 // 响应式数据
 const showDropdown = ref(false)
@@ -718,6 +792,184 @@ onUnmounted(() => {
 
   .nav-links {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 自定义404页面样式 */
+.custom-404-override {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+.custom-404-container {
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+
+.custom-404-title {
+  font-size: 4rem;
+  font-weight: 900;
+  margin: 0 0 1rem 0;
+  background: linear-gradient(45deg, #fff, #f0f0f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  animation: float 3s ease-in-out infinite;
+}
+
+.custom-404-subtitle {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: white;
+}
+
+.custom-404-message {
+  font-size: 1.125rem;
+  margin: 0 0 2rem 0;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.custom-404-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+
+.custom-404-btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.custom-404-btn.primary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+}
+
+.custom-404-btn.primary:hover {
+  background: white;
+  color: #5a67d8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.custom-404-btn.secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.custom-404-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.custom-404-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.custom-404-card {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.custom-404-card:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.custom-404-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.custom-404-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: white;
+}
+
+.custom-404-card p {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.custom-404-notice {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.custom-404-success {
+  margin: 0;
+  font-weight: 600;
+  color: #90EE90;
+  font-size: 1.125rem;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@media (max-width: 768px) {
+  .custom-404-title {
+    font-size: 3rem;
+  }
+
+  .custom-404-subtitle {
+    font-size: 1.5rem;
+  }
+
+  .custom-404-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .custom-404-btn {
+    width: 200px;
+  }
+
+  .custom-404-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

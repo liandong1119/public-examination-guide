@@ -61,52 +61,68 @@
   transition: all 0.3s ease;
 }
 
-/* 🧭 导航栏布局统一化 - 适配所有页面类型 */
+/* 🧭 统一导航栏布局 - 解决侧边栏页面差异 */
 .VPNavBar {
   height: 64px !important;
   z-index: 1000 !important;
   padding: 0 24px !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-/* 确保导航栏内容布局一致 */
-.VPNavBar .container {
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.VPNavBar .content {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
+/* 确保有侧边栏和无侧边栏页面导航栏一致 */
+.VPDoc .VPNavBar,
+.VPHome .VPNavBar,
+.Layout .VPNavBar {
   height: 64px !important;
+  padding: 0 24px !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   width: 100% !important;
 }
 
-/* 导航栏左侧 - 标题区域 */
-.VPNavBar .title {
-  flex-shrink: 0 !important;
-  margin-right: 2rem !important;
+/* 🔧 修复内容区域顶部间距 - 避免与固定导航栏重叠 */
+.VPHome {
+  padding-top: 64px !important;
 }
 
-/* 导航栏中间 - 导航菜单 */
-.VPNavBar .nav {
-  flex: 1 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+.VPDoc .container {
+  padding-top: 64px !important;
 }
 
-.VPNavBar .nav .VPNavBarMenu {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
+/* 首页Hero区域特殊处理 */
+.VPHome .VPHero {
+  padding-top: 48px !important;
+  margin-top: 0 !important;
 }
 
-/* 导航栏右侧 - 主题切换器等 */
-.VPNavBar .nav-theme-switcher {
-  flex-shrink: 0 !important;
-  margin-left: 1rem !important;
+/* 强制修复所有可能的重叠 */
+.VPContent {
+  margin-top: 64px !important;
+}
+
+.VPHome .VPContent {
+  margin-top: 0 !important;
+}
+
+/* 确保首页内容正确显示 */
+.VPHome .main {
+  padding-top: 0 !important;
+}
+
+/* 强制导航栏内容容器一致 */
+.VPNavBar .container,
+.VPNavBar .VPNavBarContainer {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
 }
 
 /* 导航菜单项优化 */
@@ -142,6 +158,63 @@
   color: var(--vp-c-brand) !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* 导航栏内容布局统一 */
+.VPNavBar .VPNavBarMenu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 🔧 侧边栏页面导航栏修复 */
+/* 确保有侧边栏的文档页面导航栏与其他页面一致 */
+.has-sidebar .VPNavBar,
+.VPDoc .VPNavBar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 64px !important;
+  padding: 0 24px !important;
+  z-index: 1000 !important;
+}
+
+/* 侧边栏页面的内容区域调整 */
+.has-sidebar .VPContent,
+.VPDoc .VPContent {
+  padding-top: 0 !important;
+}
+
+/* 侧边栏本身的位置调整 */
+.VPSidebar {
+  top: 64px !important;
+  height: calc(100vh - 64px) !important;
+}
+
+/* 确保文档内容区域正确定位 */
+.VPDoc .content-container {
+  padding-top: 64px !important;
+}
+
+.VPDoc .content {
+  padding-top: 32px !important;
+}
+
+/* 修复首页内容与导航栏重叠 */
+.VPHome .VPContent {
+  padding-top: 0 !important;
+}
+
+/* 确保所有页面内容不被导航栏遮挡 */
+.VPLayout {
+  padding-top: 64px !important;
+}
+
+/* 特殊处理：首页Hero区域 */
+.VPHome .VPLayout {
+  padding-top: 0 !important;
 }
 
 /* 🎨 主题切换器样式优化 */
@@ -211,78 +284,523 @@ body {
   padding-top: 64px !important;
 }
 
-/* 📱 移动端导航栏统一适配 */
+/* 📱 移动端折叠导航栏设计 */
 @media (max-width: 768px) {
+  /* 基础导航栏样式 */
   .VPNavBar {
-    height: 56px !important; /* 移动端稍微降低高度 */
-    padding: 0 16px !important;
+    padding: 0 16px;
+    position: relative;
   }
 
   .VPNavBar .content {
-    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
   }
 
-  .VPNavBar .title {
-    margin-right: 1rem !important;
+  /* 🔧 移动端导航优化 */
+
+  /* 在移动端隐藏桌面导航菜单 */
+  .VPNavBarMenu {
+    display: none !important;
   }
 
-  .VPNavBar .nav-theme-switcher {
-    margin-left: 0.5rem !important;
+  /* ✅ 确保VitePress汉堡菜单正常显示和工作 - 修复位置 */
+  .VPNavBarHamburger {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 40px !important;
+    height: 40px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 6px !important;
+    transition: background-color 0.2s ease !important;
+    position: relative !important;
+    top: 0 !important;
+    margin: 0 !important;
   }
 
-  .VPNavBar .theme-toggle-btn {
-    padding: 0.25rem 0.5rem;
-    height: 28px;
+  .VPNavBarHamburger:hover {
+    background: var(--vp-c-bg-mute) !important;
   }
 
-  .VPNavBar .theme-icon {
-    font-size: 1rem;
+  /* 确保汉堡菜单在导航栏中垂直居中 */
+  .VPNavBar .VPNavBarHamburger {
+    align-self: center !important;
   }
 
-  /* 移动端内容区域调整 */
-  .VPContent:not(.is-home) {
-    padding-top: 56px !important;
+  /* 优化汉堡菜单图标样式 - 统一尺寸 */
+  .VPNavBarHamburger .container {
+    width: 18px !important;
+    height: 16px !important;
+    position: relative !important;
   }
 
+  .VPNavBarHamburger .container .top,
+  .VPNavBarHamburger .container .middle,
+  .VPNavBarHamburger .container .bottom {
+    background: var(--vp-c-text-1) !important;
+    height: 2px !important;
+    border-radius: 1px !important;
+    width: 100% !important;
+    position: absolute !important;
+    left: 0 !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .VPNavBarHamburger .container .top {
+    top: 0 !important;
+  }
+
+  .VPNavBarHamburger .container .middle {
+    top: 7px !important;
+  }
+
+  .VPNavBarHamburger .container .bottom {
+    top: 14px !important;
+  }
+
+  /* 激活状态的X图标 */
+  .VPNavBarHamburger.active .container .top,
+  .VPNavBarHamburger[aria-expanded="true"] .container .top {
+    top: 7px !important;
+    transform: rotate(45deg) !important;
+  }
+
+  .VPNavBarHamburger.active .container .middle,
+  .VPNavBarHamburger[aria-expanded="true"] .container .middle {
+    opacity: 0 !important;
+  }
+
+  .VPNavBarHamburger.active .container .bottom,
+  .VPNavBarHamburger[aria-expanded="true"] .container .bottom {
+    top: 7px !important;
+    transform: rotate(-45deg) !important;
+  }
+
+  /* 🚀 只在移动端修复VitePress侧边栏显示 - 完美主题适配 */
+  @media (max-width: 768px) {
+    .VPSidebar {
+      position: fixed !important;
+      top: 64px !important;
+      left: 0 !important;
+      width: 280px !important;
+      height: calc(100vh - 64px) !important;
+      background: var(--vp-c-bg) !important;
+      border-right: 1px solid var(--vp-c-divider) !important;
+      z-index: 999 !important;
+      transform: translateX(-100%) !important;
+      transition: transform 0.3s ease !important;
+      overflow-y: auto !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* 侧边栏内容完美主题适配 */
+    .VPSidebar .VPSidebarNav {
+      background: var(--vp-c-bg) !important;
+      padding: 0 !important;
+    }
+
+    .VPSidebar .nav-content {
+      background: var(--vp-c-bg) !important;
+      color: var(--vp-c-text-1) !important;
+    }
+
+    .VPSidebar .nav-header {
+      background: var(--vp-c-bg) !important;
+      color: var(--vp-c-text-2) !important;
+      border-bottom-color: var(--vp-c-divider) !important;
+    }
+
+    .VPSidebar .nav-link {
+      background: transparent !important;
+      color: var(--vp-c-text-1) !important;
+    }
+
+    .VPSidebar .nav-link:hover {
+      background: var(--vp-c-bg-mute) !important;
+      color: var(--vp-c-text-1) !important;
+    }
+
+    /* 暗色主题下的侧边栏 */
+    .dark .VPSidebar {
+      background: var(--vp-c-bg) !important;
+      border-right-color: var(--vp-c-divider) !important;
+      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .dark .VPSidebar .VPSidebarNav {
+      background: var(--vp-c-bg) !important;
+    }
+
+    .dark .VPSidebar .nav-content {
+      background: var(--vp-c-bg) !important;
+      color: var(--vp-c-text-1) !important;
+    }
+
+    .dark .VPSidebar .nav-header {
+      background: var(--vp-c-bg) !important;
+      color: var(--vp-c-text-2) !important;
+    }
+
+    .dark .VPSidebar .nav-link {
+      color: var(--vp-c-text-1) !important;
+    }
+
+    .dark .VPSidebar .nav-link:hover {
+      background: var(--vp-c-bg-mute) !important;
+      color: var(--vp-c-text-1) !important;
+    }
+  }
+
+  /* 桌面端完全隐藏移动端侧边栏 */
+  @media (min-width: 769px) {
+    .VPSidebar {
+      display: none !important;
+    }
+
+    /* 确保桌面端使用VitePress默认导航 */
+    .VPNavBar .VPNavBarHamburger {
+      display: none !important;
+    }
+
+    /* 恢复桌面端正常布局 */
+    .VPDoc {
+      padding-left: 0 !important;
+    }
+  }
+
+  /* 当汉堡菜单激活时显示侧边栏 */
+  .VPNavBarHamburger.active ~ .VPSidebar,
+  .VPNavBarHamburger[aria-expanded="true"] ~ .VPSidebar,
+  body:has(.VPNavBarHamburger.active) .VPSidebar,
+  body:has(.VPNavBarHamburger[aria-expanded="true"]) .VPSidebar {
+    transform: translateX(0) !important;
+  }
+
+  /* 强制显示侧边栏内容 */
+  .VPSidebar .nav,
+  .VPSidebar .VPSidebarNav {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 自定义导航内容样式 - 主题适配 */
+  .mobile-nav-content {
+    background: var(--vp-c-bg) !important;
+    color: var(--vp-c-text-1) !important;
+  }
+
+  .mobile-nav-content a {
+    color: var(--vp-c-text-1) !important;
+    background: var(--vp-c-bg-soft) !important;
+    border-left-color: var(--vp-c-brand) !important;
+  }
+
+  .mobile-nav-content a:hover {
+    background: var(--vp-c-brand) !important;
+    color: var(--vp-c-bg) !important;
+  }
+
+  /* 暗色主题适配 */
+  .dark .mobile-nav-content {
+    background: var(--vp-c-bg) !important;
+    color: var(--vp-c-text-1) !important;
+  }
+
+  .dark .mobile-nav-content a {
+    color: var(--vp-c-text-1) !important;
+    background: var(--vp-c-bg-soft) !important;
+  }
+
+  .dark .mobile-nav-content a:hover {
+    background: var(--vp-c-brand) !important;
+    color: var(--vp-c-bg) !important;
+  }
+
+  /* 添加遮罩层 */
+  .VPSidebar::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  body:has(.VPNavBarHamburger[aria-expanded="true"]) .VPSidebar::before {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* 🎨 美观的移动端导航样式 - 主题适配 */
+
+  /* 导航链接悬停效果 */
+  .mobile-nav-content .nav-link:hover {
+    background: var(--vp-c-bg-mute) !important;
+    border-left-color: var(--vp-c-brand) !important;
+    transform: translateX(4px) !important;
+  }
+
+  .mobile-nav-content .nav-link:active {
+    background: var(--vp-c-bg-soft) !important;
+    transform: translateX(2px) !important;
+  }
+
+  /* 当前页面高亮 */
+  .mobile-nav-content .nav-link[href="/"] {
+    background: var(--vp-c-bg-soft) !important;
+    border-left-color: var(--vp-c-brand) !important;
+  }
+
+  /* 侧边栏优化 */
   .VPSidebar {
-    top: 56px !important;
-    height: calc(100vh - 56px) !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
   }
 
-  .VPContent {
-    min-height: calc(100vh - 56px);
+  /* 暗色主题下的阴影 */
+  .dark .VPSidebar {
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3) !important;
   }
 
-  /* 移动端首页调整 */
+  /* 导航头部样式 */
+  .mobile-nav-content .nav-header {
+    background: var(--vp-c-bg-soft) !important;
+    margin: 0 12px 16px 12px !important;
+    border-radius: 8px !important;
+    border: none !important;
+  }
+
+  /* 滚动条样式 */
+  .VPSidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .VPSidebar::-webkit-scrollbar-track {
+    background: var(--vp-c-bg-soft);
+  }
+
+  .VPSidebar::-webkit-scrollbar-thumb {
+    background: var(--vp-c-divider);
+    border-radius: 2px;
+  }
+
+  .VPSidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--vp-c-text-3);
+  }
+
+  /* 回到顶部按钮样式优化 */
+  .back-to-top-btn {
+    background: var(--vp-c-brand) !important;
+    color: var(--vp-c-bg) !important;
+  }
+
+  .back-to-top-btn:hover {
+    background: var(--vp-c-brand-dark, #0066cc) !important;
+    transform: translateY(-2px) scale(1.05) !important;
+  }
+
+  /* 响应式优化 */
+  @media (max-width: 640px) {
+    .VPSidebar {
+      width: 260px !important;
+    }
+
+    .mobile-nav-content .nav-link {
+      font-size: 14px !important;
+      padding: 12px 14px !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .VPSidebar {
+      width: 240px !important;
+    }
+  }
+
+  /* 显示汉堡菜单按钮 */
+  .VPNavBarHamburger {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    transition: background-color 0.2s ease !important;
+    position: absolute !important;
+    right: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 1001 !important;
+  }
+
+  .VPNavBarHamburger:hover {
+    background: var(--vp-c-bg-mute) !important;
+  }
+
+  /* 汉堡菜单图标 */
+  .VPNavBarHamburger .hamburger-icon {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    transform: rotate(0deg);
+    transition: 0.3s ease-in-out;
+  }
+
+  .VPNavBarHamburger .hamburger-icon span {
+    display: block;
+    position: absolute;
+    height: 2px;
+    width: 100%;
+    background: var(--vp-c-text-1);
+    border-radius: 1px;
+    opacity: 1;
+    left: 0;
+    transform: rotate(0deg);
+    transition: 0.25s ease-in-out;
+  }
+
+  .VPNavBarHamburger .hamburger-icon span:nth-child(1) {
+    top: 4px;
+  }
+
+  .VPNavBarHamburger .hamburger-icon span:nth-child(2) {
+    top: 9px;
+  }
+
+  .VPNavBarHamburger .hamburger-icon span:nth-child(3) {
+    top: 14px;
+  }
+
+  /* 激活状态的汉堡菜单图标 */
+  .VPNavBarHamburger.active .hamburger-icon span:nth-child(1) {
+    top: 9px;
+    transform: rotate(135deg);
+  }
+
+  .VPNavBarHamburger.active .hamburger-icon span:nth-child(2) {
+    opacity: 0;
+    left: -60px;
+  }
+
+  .VPNavBarHamburger.active .hamburger-icon span:nth-child(3) {
+    top: 9px;
+    transform: rotate(-135deg);
+  }
+
+  /* 移动端下拉菜单 */
+  .mobile-nav-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--vp-c-bg);
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    margin-top: 8px;
+  }
+
+  .mobile-nav-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .mobile-nav-menu .nav-item {
+    display: block;
+    padding: 12px 16px;
+    color: var(--vp-c-text-1);
+    text-decoration: none;
+    border-bottom: 1px solid var(--vp-c-divider);
+    transition: background-color 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .mobile-nav-menu .nav-item:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-nav-menu .nav-item:hover {
+    background: var(--vp-c-bg-mute);
+  }
+
+  .mobile-nav-menu .nav-item:active {
+    background: var(--vp-c-bg-soft);
+  }
+
+  /* 内容区域适配 */
   .VPHome {
-    padding-top: 0 !important;
+    padding-top: 64px;
   }
 
-  .VPHome .VPContent {
-    padding-top: 0 !important;
+  .VPContent:not(.is-home) {
+    padding-top: 64px;
   }
 }
 
-/* 导航栏内容优化 */
-.VPNavBar {
-  padding: 0 32px;
-  height: 64px;
-  overflow: visible;
+/* 📱 超小屏幕设备优化 (iPhone SE等) */
+@media (max-width: 480px) {
+  .VPNavBar {
+    padding: 0 12px !important; /* 适当的内边距 */
+  }
+
+  .VPNavBarTitle .title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+  }
+
+  /* 超小屏幕搜索框进一步优化 */
+  .VPNavBarSearch {
+    width: 100px !important;
+    min-width: 100px !important;
+  }
+
+  .VPNavBarSearch .DocSearch-Button {
+    width: 100px !important;
+    padding: 0 6px !important;
+    font-size: 11px !important;
+    height: 32px !important;
+  }
+
+  .VPNavBarSearch .DocSearch-Button-Placeholder {
+    font-size: 11px !important;
+  }
+
+  /* 汉堡菜单按钮在超小屏幕上的优化 */
+  .VPNavBarHamburger {
+    width: 36px !important;
+    height: 36px !important;
+  }
 }
 
-.VPNavBarTitle {
-  font-weight: 700;
-  font-size: 1.125rem;
-  letter-spacing: -0.025em;
-}
 
-/* 导航菜单项优化 */
-.VPNavBarMenu {
-  gap: 4px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-}
 
 .VPNavBarMenu .VPNavBarMenuLink {
   padding: 8px 16px;
@@ -697,40 +1215,27 @@ code, pre, .vp-code {
   }
 }
 
-/* 移动端导航优化 */
-@media (max-width: 768px) {
-  .VPNavBar {
-    padding: 0 16px;
-  }
-
-  .VPNavBarMenu .VPNavBarMenuLink {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    height: 36px; /* 移动端稍微小一点 */
-    max-height: 36px;
-  }
-
-  .VPFlyout .button {
-    padding: 8px 12px !important;
-    font-size: 0.9rem !important;
-    height: 36px !important;
-    max-height: 36px !important;
-  }
-}
+/* 移动端导航优化 - 已整合到上面的统一移动端适配中 */
 
 /* 隐藏VitePress原有的主题切换按钮 */
 .VPSwitchAppearance {
   display: none !important;
 }
 
-/* 确保我们的主题切换器在导航栏中正确显示 */
+/* 🔧 修复主题切换器显示 - 不要隐藏VitePress的主题切换器 */
 .VPNavBarAppearance {
-  display: none !important;
+  display: flex !important; /* 显示VitePress的主题切换器 */
+  align-items: center !important;
 }
 
 /* 全局主题变量应用到所有VitePress组件 */
 .VPHero {
   background: var(--theme-gradient-hero, var(--theme-gradient-primary)) !important;
+}
+
+/* 🎨 Hero区域简单处理 */
+.VPHome .VPHero {
+  /* 保持简单，不做过度修改 */
 }
 
 .VPHero .name {
@@ -882,10 +1387,21 @@ table th {
     overflow-x: auto;
     margin: 1rem 0;
   }
-  
+
   table {
     min-width: 600px;
   }
+}
+
+/* 🔧 温和的横向滚动防护 - 只针对关键元素 */
+html, body {
+  overflow-x: hidden;
+}
+
+/* 只对可能导致问题的容器进行限制 */
+.VPHome .VPHero {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* 卡片样式 */

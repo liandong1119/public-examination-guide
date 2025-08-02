@@ -35,9 +35,59 @@ export default defineConfig({
         {
           text: '公务员考试',
           items: [
-            { text: '考试概述', link: '/civil-service/' },
-            { text: '行政职业能力测验', link: '/civil-service/xingce' },
-            { text: '申论', link: '/civil-service/shenlun' }
+            { text: '考试概述', link: '/civil-service/' }
+          ]
+        },
+        {
+          text: '行政职业能力测验',
+          items: [
+            { text: '行测概述', link: '/civil-service/xingce/' },
+            { text: '常识判断', link: '/civil-service/xingce/changshi' },
+            { text: '言语理解', link: '/civil-service/xingce/yanyu' },
+            { text: '数量关系', link: '/civil-service/xingce/shuliang' },
+            { text: '判断推理', link: '/civil-service/xingce/panduan' },
+            { text: '资料分析', link: '/civil-service/xingce/ziliao' }
+          ]
+        },
+        {
+          text: '申论',
+          items: [
+            { text: '申论概述', link: '/civil-service/shenlun/' },
+            { text: '归纳概括', link: '/civil-service/shenlun/guinagaikuo' }
+          ]
+        },
+        {
+          text: '面试',
+          items: [
+            { text: '面试指导', link: '/civil-service/interview/' }
+          ]
+        }
+      ],
+      '/public-institution/': [
+        {
+          text: '事业单位考试',
+          items: [
+            { text: '考试概述', link: '/public-institution/' }
+          ]
+        },
+        {
+          text: '公共基础知识',
+          items: [
+            { text: '政治理论', link: '/public-institution/gongji/zhengzhi' }
+          ]
+        }
+      ],
+      '/teacher/': [
+        {
+          text: '教师编制考试',
+          items: [
+            { text: '考试概述', link: '/teacher/' }
+          ]
+        },
+        {
+          text: '教育理论',
+          items: [
+            { text: '教育学', link: '/teacher/theory/jiaoyu' }
           ]
         }
       ],
@@ -45,9 +95,12 @@ export default defineConfig({
         {
           text: '备考指南',
           items: [
-            { text: '学习计划', link: '/guide/' },
-            { text: '时间管理', link: '/guide/time-management' },
-            { text: '心态调整', link: '/guide/mindset' }
+            { text: '备考概述', link: '/guide/' },
+            { text: '学习方法', link: '/guide/methods' },
+            { text: '功能特色', link: '/guide/features' },
+            { text: '组件说明', link: '/guide/components' },
+            { text: '主题系统', link: '/guide/themes' },
+            { text: '主题展示', link: '/guide/theme-showcase' }
           ]
         }
       ]
@@ -125,5 +178,28 @@ export default defineConfig({
   ignoreDeadLinks: true,
 
   // 404页面配置
-  cleanUrls: true
+  cleanUrls: true,
+
+  // 强制自定义404页面
+  transformPageData(pageData) {
+    if (pageData.relativePath === '404.md') {
+      pageData.frontmatter = pageData.frontmatter || {}
+      pageData.frontmatter.layout = 'home'
+      pageData.frontmatter.title = '页面未找到'
+    }
+  },
+
+  // 路由重写，强制404页面
+  rewrites: {
+    '404.md': '404.html'
+  },
+
+  // 开发服务器配置
+  vite: {
+    server: {
+      fs: {
+        allow: ['..']
+      }
+    }
+  }
 })
