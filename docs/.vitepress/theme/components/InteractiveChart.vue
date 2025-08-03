@@ -251,10 +251,20 @@ watch(parsedConfig, (newConfig) => {
 // 方法
 const initChart = () => {
   if (!chartContainer.value) return
-  
-  chartInstance.value = echarts.init(chartContainer.value)
+
+  // 确保容器有尺寸
+  const container = chartContainer.value
+  if (container.clientWidth === 0 || container.clientHeight === 0) {
+    // 如果容器没有尺寸，延迟初始化
+    setTimeout(() => {
+      initChart()
+    }, 100)
+    return
+  }
+
+  chartInstance.value = echarts.init(container)
   updateChart()
-  
+
   // 监听窗口大小变化
   window.addEventListener('resize', handleResize)
 }
@@ -622,6 +632,9 @@ onUnmounted(() => {
 
 .chart-main {
   min-height: 300px;
+  min-width: 300px;
+  width: 100%;
+  height: 400px;
 }
 
 .chart-legend {

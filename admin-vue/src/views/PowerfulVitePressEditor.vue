@@ -815,7 +815,7 @@ const saveDocument = async (silent = false) => {
   }
 }
 
-const createNewFile = async () => {
+const createNewFile = async (parent = null) => {
   const fileName = await ElMessageBox.prompt('请输入文件名（包含.md扩展名）', '新建文档', {
     confirmButtonText: '创建',
     cancelButtonText: '取消',
@@ -825,15 +825,46 @@ const createNewFile = async () => {
 
   if (!fileName) return
 
+  const basePath = parent ? parent.path : 'docs'
   const newFile = {
     name: fileName.value,
-    path: `docs/${fileName.value}`,
+    path: `${basePath}/${fileName.value}`,
     type: 'file'
   }
 
   fileList.value.push(newFile)
   await selectFile(newFile)
   ElMessage.success('新文档创建成功')
+}
+
+const createNewFolder = async (parent = null) => {
+  const folderName = await ElMessageBox.prompt('请输入文件夹名称', '新建文件夹', {
+    confirmButtonText: '创建',
+    cancelButtonText: '取消',
+    inputPattern: /^[^\/\\:*?"<>|]+$/,
+    inputErrorMessage: '文件夹名称不能包含特殊字符'
+  }).catch(() => null)
+
+  if (!folderName) return
+
+  const basePath = parent ? parent.path : 'docs'
+  const newFolder = {
+    name: folderName.value,
+    path: `${basePath}/${folderName.value}`,
+    type: 'directory',
+    children: []
+  }
+
+  // 添加到文件列表
+  if (parent && parent.children) {
+    parent.children.push(newFolder)
+  } else {
+    fileList.value.push(newFolder)
+  }
+
+  // 刷新文件树
+  await refreshFiles()
+  ElMessage.success('文件夹创建成功')
 }
 
 const deleteFile = async (file) => {
