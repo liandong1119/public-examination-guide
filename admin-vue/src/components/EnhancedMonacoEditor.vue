@@ -212,6 +212,8 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as monaco from 'monaco-editor'
 import { marked } from 'marked'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import KeybindingManager from './KeybindingManager.vue'
 import SnippetManager from './SnippetManager.vue'
 import DocumentOutline from './DocumentOutline.vue'
@@ -307,7 +309,15 @@ const wordCount = computed(() => props.modelValue.length)
 const previewHtml = computed(() => {
   if (!props.modelValue) return ''
   try {
-    return marked(props.modelValue)
+    let html = marked(props.modelValue)
+
+    // 处理数学公式
+    html = processMathFormulas(html)
+
+    // 处理VitePress容器
+    html = processVitePressContainers(html)
+
+    return html
   } catch (error) {
     console.error('Markdown解析错误:', error)
     return '<p>Markdown解析错误</p>'
@@ -1811,6 +1821,108 @@ defineExpose({
     handleSettingsChanged(settings)
   }
 })
+
+// 数学公式处理函数
+const processMathFormulas = (html) => {
+  try {
+    // 处理块级数学公式 $$...$$
+    html = html.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+      try {
+        const cleanFormula = formula.trim()
+        const rendered = katex.renderToString(cleanFormula, {
+          displayMode: true,
+          throwOnError: false,
+          strict: false
+        })
+        return `<div class="math-block">${rendered}</div>`
+      } catch (error) {
+        console.warn('块级公式渲染失败:', formula, error)
+        return `<div class="math-block math-error">$$${formula.trim()}$$</div>`
+      }
+    })
+
+    // 处理行内数学公式 $...$
+    html = html.replace(/\$([^$\n]+?)\$/g, (match, formula) => {
+      try {
+        const cleanFormula = formula.trim()
+        const rendered = katex.renderToString(cleanFormula, {
+          displayMode: false,
+          throwOnError: false,
+          strict: false
+        })
+        return `<span class="math-inline">${rendered}</span>`
+      } catch (error) {
+        console.warn('行内公式渲染失败:', formula, error)
+        return `<span class="math-inline math-error">$${formula.trim()}$</span>`
+      }
+    })
+
+    return html
+  } catch (error) {
+    console.error('数学公式处理失败:', error)
+    return html
+  }
+}
+
+// VitePress容器处理函数
+const processVitePressContainers = (html) => {
+  // 处理 tip 容器
+  html = html.replace(/::: tip(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '提示'
+    return `
+      <div class="vitepress-container tip">
+        <div class="container-title">💡 ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 warning 容器
+  html = html.replace(/::: warning(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '警告'
+    return `
+      <div class="vitepress-container warning">
+        <div class="container-title">⚠️ ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 danger 容器
+  html = html.replace(/::: danger(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '危险'
+    return `
+      <div class="vitepress-container danger">
+        <div class="container-title">🚨 ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 info 容器
+  html = html.replace(/::: info(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '信息'
+    return `
+      <div class="vitepress-container info">
+        <div class="container-title">ℹ️ ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 details 容器
+  html = html.replace(/::: details(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '详细信息'
+    return `
+      <details class="vitepress-container details">
+        <summary class="container-title">📋 ${titleText}</summary>
+        <div class="container-content">${marked(content.trim())}</div>
+      </details>
+    `
+  })
+
+  return html
+}
 </script>
 
 <style scoped lang="scss">
@@ -2405,6 +2517,104 @@ defineExpose({
     width: 90vw;
     max-width: 320px;
     max-height: 70vh;
+  }
+
+  // VitePress容器样式
+  .vitepress-container {
+    margin: 16px 0;
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid;
+
+    .container-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .container-content {
+      p:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    &.tip {
+      background-color: #f0f9ff;
+      border-left-color: #3b82f6;
+
+      .container-title {
+        color: #1e40af;
+      }
+    }
+
+    &.warning {
+      background-color: #fffbeb;
+      border-left-color: #f59e0b;
+
+      .container-title {
+        color: #d97706;
+      }
+    }
+
+    &.danger {
+      background-color: #fef2f2;
+      border-left-color: #ef4444;
+
+      .container-title {
+        color: #dc2626;
+      }
+    }
+
+    &.info {
+      background-color: #f0fdf4;
+      border-left-color: #10b981;
+
+      .container-title {
+        color: #059669;
+      }
+    }
+
+    &.details {
+      background-color: #f8fafc;
+      border-left-color: #64748b;
+
+      summary.container-title {
+        color: #475569;
+        cursor: pointer;
+        user-select: none;
+
+        &:hover {
+          color: #334155;
+        }
+      }
+    }
+  }
+
+  // 数学公式样式
+  .math-block {
+    margin: 16px 0;
+    text-align: center;
+    overflow-x: auto;
+
+    &.math-error {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 4px;
+      padding: 8px;
+      color: #dc2626;
+      font-family: monospace;
+    }
+  }
+
+  .math-inline {
+    &.math-error {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 2px;
+      padding: 2px 4px;
+      color: #dc2626;
+      font-family: monospace;
+    }
   }
 }
 </style>

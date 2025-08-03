@@ -82,6 +82,8 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { marked } from 'marked'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 
 // Props
 const props = defineProps({
@@ -213,21 +215,36 @@ const processCustomComponents = (html) => {
           </div>
           <div class="component-content">
             <div class="formula-steps">
-              ${config.steps ? config.steps.map((step, index) => `
-                <div class="formula-step">
-                  <div class="step-number">${index + 1}</div>
-                  <div class="step-content">
-                    <div class="step-description">${step.description}</div>
-                    <div class="step-formula">${step.formula}</div>
+              ${config.steps ? config.steps.map((step, index) => {
+                // 渲染公式
+                let renderedFormula = step.formula
+                try {
+                  renderedFormula = katex.renderToString(step.formula, {
+                    displayMode: true,
+                    throwOnError: false,
+                    strict: false
+                  })
+                } catch (err) {
+                  console.warn('公式渲染失败:', step.formula, err)
+                }
+
+                return `
+                  <div class="formula-step">
+                    <div class="step-number">步骤 ${index + 1}</div>
+                    <div class="step-content">
+                      <div class="step-description">${step.description}</div>
+                      <div class="step-formula">${renderedFormula}</div>
+                    </div>
                   </div>
-                </div>
-              `).join('') : ''}
+                `
+              }).join('') : ''}
             </div>
           </div>
         </div>
       `
     } catch (e) {
-      return `<div class="component-error">公式推导组件配置错误</div>`
+      console.error('公式推导组件解析错误:', e)
+      return `<div class="component-error">公式推导组件配置错误: ${e.message}</div>`
     }
   })
 
@@ -307,21 +324,110 @@ const processCustomComponents = (html) => {
     }
   })
 
+  // 处理VitePress容器语法
+  html = processVitePressContainers(html)
+
+  return html
+}
+
+const processVitePressContainers = (html) => {
+  // 处理 tip 容器
+  html = html.replace(/::: tip(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '提示'
+    return `
+      <div class="vitepress-container tip">
+        <div class="container-title">💡 ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 warning 容器
+  html = html.replace(/::: warning(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '警告'
+    return `
+      <div class="vitepress-container warning">
+        <div class="container-title">⚠️ ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 danger 容器
+  html = html.replace(/::: danger(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '危险'
+    return `
+      <div class="vitepress-container danger">
+        <div class="container-title">🚨 ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 info 容器
+  html = html.replace(/::: info(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '信息'
+    return `
+      <div class="vitepress-container info">
+        <div class="container-title">ℹ️ ${titleText}</div>
+        <div class="container-content">${marked(content.trim())}</div>
+      </div>
+    `
+  })
+
+  // 处理 details 容器
+  html = html.replace(/::: details(.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+    const titleText = title.trim() || '详细信息'
+    return `
+      <details class="vitepress-container details">
+        <summary class="container-title">📋 ${titleText}</summary>
+        <div class="container-content">${marked(content.trim())}</div>
+      </details>
+    `
+  })
+
   return html
 }
 
 const processMathFormulas = (html) => {
-  // 处理块级数学公式 $$...$$
-  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
-    return `<div class="math-block" data-formula="${encodeURIComponent(formula.trim())}">${formula.trim()}</div>`
-  })
+  try {
+    // 处理块级数学公式 $$...$$
+    html = html.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+      try {
+        const cleanFormula = formula.trim()
+        const rendered = katex.renderToString(cleanFormula, {
+          displayMode: true,
+          throwOnError: false,
+          strict: false
+        })
+        return `<div class="math-block">${rendered}</div>`
+      } catch (error) {
+        console.warn('块级公式渲染失败:', formula, error)
+        return `<div class="math-block math-error">$$${formula.trim()}$$</div>`
+      }
+    })
 
-  // 处理行内数学公式 $...$
-  html = html.replace(/\$([^$\n]+?)\$/g, (match, formula) => {
-    return `<span class="math-inline" data-formula="${encodeURIComponent(formula.trim())}">${formula.trim()}</span>`
-  })
+    // 处理行内数学公式 $...$
+    html = html.replace(/\$([^$\n]+?)\$/g, (match, formula) => {
+      try {
+        const cleanFormula = formula.trim()
+        const rendered = katex.renderToString(cleanFormula, {
+          displayMode: false,
+          throwOnError: false,
+          strict: false
+        })
+        return `<span class="math-inline">${rendered}</span>`
+      } catch (error) {
+        console.warn('行内公式渲染失败:', formula, error)
+        return `<span class="math-inline math-error">$${formula.trim()}$</span>`
+      }
+    })
 
-  return html
+    return html
+  } catch (error) {
+    console.error('数学公式处理失败:', error)
+    return html
+  }
 }
 
 const addTocAnchors = (html) => {
@@ -1212,6 +1318,104 @@ defineExpose({
         transform: translateY(-2px);
         box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
       }
+    }
+  }
+
+  // VitePress容器样式
+  .vitepress-container {
+    margin: 16px 0;
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid;
+
+    .container-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .container-content {
+      p:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    &.tip {
+      background-color: #f0f9ff;
+      border-left-color: #3b82f6;
+
+      .container-title {
+        color: #1e40af;
+      }
+    }
+
+    &.warning {
+      background-color: #fffbeb;
+      border-left-color: #f59e0b;
+
+      .container-title {
+        color: #d97706;
+      }
+    }
+
+    &.danger {
+      background-color: #fef2f2;
+      border-left-color: #ef4444;
+
+      .container-title {
+        color: #dc2626;
+      }
+    }
+
+    &.info {
+      background-color: #f0fdf4;
+      border-left-color: #10b981;
+
+      .container-title {
+        color: #059669;
+      }
+    }
+
+    &.details {
+      background-color: #f8fafc;
+      border-left-color: #64748b;
+
+      summary.container-title {
+        color: #475569;
+        cursor: pointer;
+        user-select: none;
+
+        &:hover {
+          color: #334155;
+        }
+      }
+    }
+  }
+
+  // 数学公式样式增强
+  .math-block {
+    margin: 16px 0;
+    text-align: center;
+    overflow-x: auto;
+
+    &.math-error {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 4px;
+      padding: 8px;
+      color: #dc2626;
+      font-family: monospace;
+    }
+  }
+
+  .math-inline {
+    &.math-error {
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 2px;
+      padding: 2px 4px;
+      color: #dc2626;
+      font-family: monospace;
     }
   }
 }
