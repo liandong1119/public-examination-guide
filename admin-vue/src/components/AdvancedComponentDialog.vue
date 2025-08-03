@@ -152,7 +152,7 @@
       append-to-body>
       <div class="component-preview-content">
         <div v-if="previewingComponent" class="preview-area">
-          <!-- 这里根据组件类型渲染不同的预览 -->
+          <!-- 数学公式推导预览 -->
           <div v-if="previewingComponent.type === 'formula-derivation'" class="formula-preview">
             <h3>{{ previewingComponent.config.title }}</h3>
             <div class="formula-steps">
@@ -163,17 +163,87 @@
               </div>
             </div>
           </div>
-          
+
+          <!-- 交互式图表预览 -->
           <div v-else-if="previewingComponent.type === 'interactive-chart'" class="chart-preview">
             <h3>{{ previewingComponent.config.title }}</h3>
             <div class="chart-container" ref="previewChartContainer"></div>
           </div>
-          
+
+          <!-- 公式计算器预览 -->
+          <div v-else-if="previewingComponent.type === 'formula-calculator'" class="calculator-preview">
+            <h3>{{ previewingComponent.config.title }}</h3>
+            <div class="formula-display" v-html="renderFormula(previewingComponent.config.formula)"></div>
+            <div class="variables-preview">
+              <div v-for="(value, variable) in previewingComponent.config.defaultValues" :key="variable" class="variable-item">
+                <span class="variable-name">{{ variable }} =</span>
+                <span class="variable-value">{{ value }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 函数图像预览 -->
+          <div v-else-if="previewingComponent.type === 'formula-graph'" class="graph-preview">
+            <h3>{{ previewingComponent.config.title }}</h3>
+            <div class="functions-list">
+              <div v-for="func in previewingComponent.config.functions" :key="func" class="function-item">
+                <span class="function-formula" v-html="renderFormula(`f(x) = ${func}`)"></span>
+              </div>
+            </div>
+            <div class="range-info">
+              <p>x 范围: [{{ previewingComponent.config.xRange[0] }}, {{ previewingComponent.config.xRange[1] }}]</p>
+              <p>y 范围: [{{ previewingComponent.config.yRange[0] }}, {{ previewingComponent.config.yRange[1] }}]</p>
+            </div>
+          </div>
+
+          <!-- 几何证明预览 -->
+          <div v-else-if="previewingComponent.type === 'geometry-proof'" class="geometry-preview">
+            <h3>{{ previewingComponent.config.title }}</h3>
+            <div class="proof-steps">
+              <div v-for="(step, index) in previewingComponent.config.steps" :key="index" class="proof-step">
+                <span class="step-number">{{ index + 1 }}.</span>
+                <span class="step-text">{{ step }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3D可视化预览 -->
+          <div v-else-if="previewingComponent.type === '3d-visualization'" class="visualization-preview">
+            <h3>{{ previewingComponent.config.title }}</h3>
+            <div class="function-display" v-html="renderFormula(previewingComponent.config.function)"></div>
+            <div class="range-info">
+              <p>x 范围: [{{ previewingComponent.config.xRange[0] }}, {{ previewingComponent.config.xRange[1] }}]</p>
+              <p>y 范围: [{{ previewingComponent.config.yRange[0] }}, {{ previewingComponent.config.yRange[1] }}]</p>
+            </div>
+          </div>
+
+          <!-- 互动测验预览 -->
+          <div v-else-if="previewingComponent.type === 'quiz-component'" class="quiz-preview">
+            <h3>{{ previewingComponent.config.title }}</h3>
+            <div v-if="previewingComponent.config.questions && previewingComponent.config.questions.length > 0" class="question-preview">
+              <div class="question-text">{{ previewingComponent.config.questions[0].question }}</div>
+              <div class="options-preview">
+                <div v-for="(option, index) in previewingComponent.config.questions[0].options" :key="index" class="option-item">
+                  <span class="option-label">{{ String.fromCharCode(65 + index) }}.</span>
+                  <span class="option-text">{{ option }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 通用预览 -->
           <div v-else class="generic-preview">
             <h3>{{ previewingComponent.name }}</h3>
-            <p>{{ previewingComponent.description }}</p>
-            <pre>{{ JSON.stringify(previewingComponent.config, null, 2) }}</pre>
+            <p class="description">{{ previewingComponent.description }}</p>
+            <div class="config-preview">
+              <h4>组件配置:</h4>
+              <pre class="config-json">{{ JSON.stringify(previewingComponent.config, null, 2) }}</pre>
+            </div>
           </div>
+        </div>
+
+        <div v-else class="no-preview">
+          <p>暂无预览内容</p>
         </div>
       </div>
     </el-dialog>
@@ -194,6 +264,7 @@ import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import katex from 'katex'
+import 'katex/dist/katex.min.css'
 import * as echarts from 'echarts'
 
 // Props
@@ -389,58 +460,110 @@ const insertSelectedComponent = () => {
 }
 
 const previewComponent = (component) => {
+  console.log('预览组件:', component)
   previewingComponent.value = component
   showPreviewDialog.value = true
 
   // 如果是图表组件，渲染预览
   if (component.type === 'interactive-chart') {
     nextTick(() => {
-      renderChartPreview(component)
+      setTimeout(() => {
+        renderChartPreview(component)
+      }, 200) // 增加延迟确保DOM已渲染
     })
   }
+
+  // 显示预览成功消息
+  ElMessage.success(`正在预览: ${component.name}`)
 }
 
 const renderChartPreview = (component) => {
+  console.log('开始渲染图表预览:', component)
+
   if (!previewChartContainer.value) {
     console.warn('预览容器未找到')
+    ElMessage.warning('预览容器未找到，请稍后重试')
     return
   }
 
   try {
+    // 清除之前的图表实例
+    echarts.dispose(previewChartContainer.value)
+
     const chart = echarts.init(previewChartContainer.value)
     const option = {
-      title: { text: component.config.title || '预览图表' },
-      tooltip: { trigger: 'axis' },
+      title: {
+        text: component.config.title || '预览图表',
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(50,50,50,0.7)',
+        textStyle: { color: '#fff' }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
       xAxis: {
         type: 'category',
-        data: component.config.data?.categories || ['A', 'B', 'C']
+        data: component.config.data?.categories || ['示例A', '示例B', '示例C', '示例D', '示例E'],
+        axisLabel: {
+          interval: 0,
+          rotate: 30
+        }
       },
-      yAxis: { type: 'value' },
+      yAxis: {
+        type: 'value',
+        name: '数值'
+      },
       series: [{
-        data: component.config.data?.series || [10, 20, 30],
+        data: component.config.data?.series || [85, 92, 78, 88, 90],
         type: component.config.type || 'bar',
-        name: '数据系列'
+        name: '数据系列',
+        itemStyle: {
+          color: '#409eff'
+        },
+        emphasis: {
+          itemStyle: {
+            color: '#66b1ff'
+          }
+        }
       }]
     }
+
     chart.setOption(option)
+    console.log('图表配置已设置:', option)
 
     // 确保图表正确渲染
     setTimeout(() => {
       chart.resize()
+      console.log('图表已调整大小')
     }, 100)
+
+    ElMessage.success('图表预览加载成功')
   } catch (error) {
     console.error('图表预览渲染失败:', error)
+    ElMessage.error(`图表预览失败: ${error.message}`)
   }
 }
 
 const renderFormula = (formula) => {
   try {
-    return katex.renderToString(formula, {
+    console.log('渲染公式:', formula)
+    const rendered = katex.renderToString(formula, {
       throwOnError: false,
-      displayMode: true
+      displayMode: true,
+      strict: false
     })
+    console.log('公式渲染成功')
+    return rendered
   } catch (error) {
-    return formula
+    console.error('公式渲染失败:', error)
+    ElMessage.warning(`公式渲染失败: ${error.message}`)
+    return `<span style="color: red;">公式渲染错误: ${formula}</span>`
   }
 }
 
@@ -599,6 +722,158 @@ const loadCustomComponents = () => {
   .chart-container {
     width: 100%;
     height: 300px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+  }
+
+  .calculator-preview {
+    .formula-display {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .variables-preview {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .variable-item {
+      padding: 8px 16px;
+      background: #409eff;
+      color: white;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+  }
+
+  .graph-preview {
+    .functions-list {
+      margin: 20px 0;
+    }
+
+    .function-item {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f0f9ff;
+      border-left: 4px solid #409eff;
+      border-radius: 4px;
+    }
+
+    .range-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+
+      p {
+        margin: 5px 0;
+        color: #666;
+      }
+    }
+  }
+
+  .geometry-preview {
+    .proof-steps {
+      margin: 20px 0;
+    }
+
+    .proof-step {
+      margin: 10px 0;
+      padding: 12px;
+      background: #fff7e6;
+      border-left: 4px solid #fa8c16;
+      border-radius: 4px;
+
+      .step-number {
+        font-weight: bold;
+        color: #fa8c16;
+        margin-right: 8px;
+      }
+    }
+  }
+
+  .visualization-preview {
+    .function-display {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 6px;
+    }
+  }
+
+  .quiz-preview {
+    .question-preview {
+      margin: 20px 0;
+    }
+
+    .question-text {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .options-preview {
+      margin-left: 20px;
+    }
+
+    .option-item {
+      margin: 8px 0;
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #409eff;
+
+      .option-label {
+        font-weight: bold;
+        color: #409eff;
+        margin-right: 8px;
+      }
+    }
+  }
+
+  .generic-preview {
+    .description {
+      color: #666;
+      font-style: italic;
+      margin: 15px 0;
+    }
+
+    .config-preview {
+      margin-top: 20px;
+
+      h4 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+    }
+
+    .config-json {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 15px;
+      font-size: 12px;
+      color: #666;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  }
+
+  .no-preview {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 50px;
   }
 }
 </style>
