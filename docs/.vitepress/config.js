@@ -206,7 +206,7 @@ export default defineConfig({
 
   // Markdown配置
   markdown: {
-    math: true,
+    math: true, // 启用VitePress的数学渲染，用于Markdown中的公式
     config: (md) => {
       // 添加自定义容器来支持高级组件
       md.use(container, 'formula-derivation', {

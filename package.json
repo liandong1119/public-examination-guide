@@ -35,9 +35,11 @@
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "markdown-it-mathjax3": "^4.3.2",
     "vitepress": "^1.6.3"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "@vue/reactivity": "^3.4.0",
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.4.1",
@@ -46,6 +48,7 @@
     "d3": "^7.8.5",
     "dotenv": "^16.5.0",
     "echarts": "^6.0.0",
+    "element-plus": "^2.10.6",
     "express": "^4.18.2",
     "express-rate-limit": "^7.5.0",
     "express-validator": "^7.2.1",
@@ -55,7 +58,6 @@
     "jsonwebtoken": "^9.0.2",
     "katex": "^0.16.9",
     "markdown-it-container": "^4.0.0",
-    "markdown-it-mathjax3": "^4.3.2",
     "marked": "^15.0.12",
     "monaco-editor": "^0.52.2",
     "multer": "^2.0.1",

@@ -111,7 +111,6 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import katex from 'katex'
-// 移除Element Plus依赖
 
 // Props
 const props = defineProps({
@@ -156,8 +155,8 @@ const renderFormula = (formula) => {
       displayMode: true,
       strict: false,
       trust: true,
-      output: 'html', // 确保输出HTML格式
-      fleqn: false, // 居中显示
+      output: 'html',
+      fleqn: false,
       macros: {
         "\\RR": "\\mathbb{R}",
         "\\NN": "\\mathbb{N}",
@@ -200,7 +199,6 @@ const showStepDetail = (step) => {
 
 // 生命周期
 onMounted(() => {
-  // 禁用自动播放，让用户手动控制
   console.log('FormulaDerivation mounted with config:', parsedConfig.value)
 })
 </script>
@@ -437,6 +435,49 @@ onMounted(() => {
   min-width: 200px;
 }
 
+.formula-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 80%;
+  max-height: 80%;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
 .formula-detail {
   text-align: center;
 }
@@ -468,15 +509,6 @@ onMounted(() => {
 .formula-error {
   color: #f56c6c;
   font-style: italic;
-}
-
-/* 隐藏JSON配置显示 */
-.formula-derivation-container + p {
-  display: none !important;
-}
-
-.formula-derivation-container + div > p {
-  display: none !important;
 }
 
 /* 响应式设计 */

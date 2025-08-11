@@ -1,6 +1,14 @@
 import DefaultTheme from 'vitepress/theme'
 import './custom.css'
 
+// 导入Element Plus
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
+// 导入KaTeX样式
+import 'katex/dist/katex.min.css'
+
 // 导入高级组件
 import FormulaDerivation from './components/FormulaDerivation.vue'
 import InteractiveChart from './components/InteractiveChart.vue'
@@ -21,6 +29,14 @@ export default {
   Layout,
   NotFound,
   enhanceApp({ app }) {
+    // 注册Element Plus
+    app.use(ElementPlus)
+
+    // 注册Element Plus图标
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+      app.component(key, component)
+    }
+
     // 注册主题组件
     app.component('GlobalThemeSwitcher', GlobalThemeSwitcher)
     app.component('ThemeSwitcher', ThemeSwitcher)

@@ -35,11 +35,18 @@
       </div>
 
       <!-- 渲染解析后的内容 -->
-      <div
-        class="rendered-content"
-        ref="renderedContent"
-        v-html="renderedHtml"
-        @click="handleContentClick">
+      <div class="rendered-content" ref="renderedContent" @click="handleContentClick">
+        <!-- 渲染组件和HTML内容 -->
+        <template v-for="(item, index) in parsedContent" :key="index">
+          <!-- Vue组件 -->
+          <component
+            v-if="item.type === 'component'"
+            :is="item.component"
+            v-bind="item.props"
+          />
+          <!-- 普通HTML内容 -->
+          <div v-else v-html="item.html"></div>
+        </template>
       </div>
 
       <!-- 目录导航 -->
@@ -84,6 +91,8 @@ import { ElMessage } from 'element-plus'
 import { marked } from 'marked'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
+import FormulaDerivation from './FormulaDerivation.vue'
+import InteractiveChart from './InteractiveChart.vue'
 
 // Props
 const props = defineProps({
@@ -161,22 +170,64 @@ const tocItems = computed(() => {
   return headings
 })
 
-// 计算属性 - 渲染的HTML内容
-const renderedHtml = computed(() => {
-  if (!props.content) return ''
+// 计算属性 - 解析内容为组件和HTML混合数组
+const parsedContent = computed(() => {
+  if (!props.content) return []
 
   isRendering.value = true
 
   try {
+    const result = []
+    let content = props.content
+
+    // 处理公式推导组件
+    content = content.replace(/::: formula-derivation ([^\n]*)\n([\s\S]*?)\n:::/gim, (match, title, jsonContent) => {
+      try {
+        const config = JSON.parse(jsonContent.trim())
+        result.push({
+          type: 'component',
+          component: FormulaDerivation,
+          props: { config: { ...config, title: config.title || title } }
+        })
+        return '<!-- COMPONENT_PLACEHOLDER -->'
+      } catch (e) {
+        console.error('公式推导组件解析错误:', e)
+        result.push({
+          type: 'html',
+          html: `<div class="component-error">公式推导组件配置错误: ${e.message}</div>`
+        })
+        return '<!-- COMPONENT_PLACEHOLDER -->'
+      }
+    })
+
+    // 处理交互式图表组件
+    content = content.replace(/::: interactive-chart ([^\n]*)\n([\s\S]*?)\n:::/gim, (match, title, jsonContent) => {
+      try {
+        const config = JSON.parse(jsonContent.trim())
+        result.push({
+          type: 'component',
+          component: InteractiveChart,
+          props: { config: { ...config, title: config.title || title } }
+        })
+        return '<!-- COMPONENT_PLACEHOLDER -->'
+      } catch (e) {
+        console.error('交互图表组件解析错误:', e)
+        result.push({
+          type: 'html',
+          html: `<div class="component-error">交互图表组件配置错误: ${e.message}</div>`
+        })
+        return '<!-- COMPONENT_PLACEHOLDER -->'
+      }
+    })
+
     // 配置marked
     marked.setOptions(markedOptions)
 
-    let html = marked(props.content)
+    // 处理剩余的markdown内容
+    let html = marked(content)
 
-    // 处理自定义组件
-    if (props.enableCustomComponents) {
-      html = processCustomComponents(html)
-    }
+    // 处理VitePress容器语法
+    html = processVitePressContainers(html)
 
     // 处理数学公式
     if (enableMath.value) {
@@ -189,146 +240,226 @@ const renderedHtml = computed(() => {
     // 处理代码高亮
     html = processCodeHighlight(html)
 
+    // 将HTML内容按组件占位符分割
+    const htmlParts = html.split('<!-- COMPONENT_PLACEHOLDER -->')
+    const finalResult = []
+
+    for (let i = 0; i < htmlParts.length; i++) {
+      // 添加HTML部分
+      if (htmlParts[i].trim()) {
+        finalResult.push({
+          type: 'html',
+          html: htmlParts[i]
+        })
+      }
+
+      // 添加对应的组件
+      if (i < result.length) {
+        finalResult.push(result[i])
+      }
+    }
+
     nextTick(() => {
       isRendering.value = false
       updateActiveTocItem()
     })
 
-    return html
+    return finalResult
   } catch (error) {
     console.error('Markdown渲染错误:', error)
     isRendering.value = false
-    return '<div class="render-error">预览渲染错误</div>'
+    return [{
+      type: 'html',
+      html: '<div class="render-error">预览渲染错误</div>'
+    }]
   }
 })
 
 // 方法
-const processCustomComponents = (html) => {
+// 使用占位符处理自定义组件（在marked解析之前）
+const processCustomComponentsWithPlaceholders = (content, placeholderMap) => {
+  let placeholderIndex = 0
+
   // 处理公式推导组件
-  html = html.replace(/::: formula-derivation (.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+  content = content.replace(/::: formula-derivation ([^\n]*)\n([\s\S]*?)\n:::/gim, (match, title, jsonContent) => {
     try {
-      const config = JSON.parse(content)
-      return `
-        <div class="custom-component formula-derivation" data-component="formula-derivation">
-          <div class="component-header">
-            <h4>📐 ${title}</h4>
-          </div>
-          <div class="component-content">
-            <div class="formula-steps">
-              ${config.steps ? config.steps.map((step, index) => {
-                // 渲染公式
-                let renderedFormula = step.formula
-                try {
-                  renderedFormula = katex.renderToString(step.formula, {
+      const config = JSON.parse(jsonContent.trim())
+      const placeholder = `COMPONENT_PLACEHOLDER_${placeholderIndex++}`
+
+      const componentHtml = '<div class="formula-derivation-container custom-component" data-component="formula-derivation">' +
+        '<div class="derivation-header">' +
+          '<h3 class="derivation-title">' + (config.title || title) + '</h3>' +
+          '<div class="derivation-controls">' +
+            '<div class="control-buttons">' +
+              '<button class="control-btn active">显示全部</button>' +
+              '<button class="control-btn">🔄 重置</button>' +
+            '</div>' +
+            '<div class="step-progress">' +
+              '<div class="progress-info">步骤 ' + config.steps.length + ' / ' + config.steps.length + '</div>' +
+              '<div class="progress-bar">' +
+                '<div class="progress-fill" style="width: 100%;"></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="derivation-content">' +
+          '<div class="steps-container">' +
+            // 只显示第一个步骤（模拟前台的单步显示）
+            (config.steps && config.steps.length > 0 ? (() => {
+              const step = config.steps[0] // 显示第一步
+              let renderedFormula = step.formula
+              try {
+                if (window.katex) {
+                  renderedFormula = window.katex.renderToString(step.formula, {
                     displayMode: true,
                     throwOnError: false,
                     strict: false
                   })
-                } catch (err) {
-                  console.warn('公式渲染失败:', step.formula, err)
                 }
+              } catch (err) {
+                console.warn('公式渲染失败:', step.formula, err)
+                renderedFormula = '<span class="formula-fallback">$' + step.formula + '$</span>'
+              }
 
-                return `
-                  <div class="formula-step">
-                    <div class="step-number">步骤 ${index + 1}</div>
-                    <div class="step-content">
-                      <div class="step-description">${step.description}</div>
-                      <div class="step-formula">${renderedFormula}</div>
-                    </div>
-                  </div>
-                `
-              }).join('') : ''}
-            </div>
-          </div>
-        </div>
-      `
+              return '<div class="derivation-step visible current" data-step="0">' +
+                '<div class="step-header">' +
+                  '<div class="step-number">' +
+                    '<span class="step-index">1</span>' +
+                    '<div class="step-indicator active"></div>' +
+                  '</div>' +
+                  '<div class="step-description">' + step.description + '</div>' +
+                '</div>' +
+                '<div class="step-formula">' +
+                  '<div class="formula-content">' + renderedFormula + '</div>' +
+                  (step.explanation ? '<div class="step-explanation">' + step.explanation + '</div>' : '') +
+                '</div>' +
+              '</div>' +
+              // 添加导航控件（模拟前台的导航）
+              '<div class="step-navigation">' +
+                '<div class="nav-controls">' +
+                  '<button class="nav-btn" disabled>← 上一步</button>' +
+                  '<div class="step-info">1 / ' + config.steps.length + '</div>' +
+                  '<button class="nav-btn">下一步 →</button>' +
+                '</div>' +
+                '<div class="progress-bar-nav">' +
+                  '<div class="progress-fill-nav" style="width: ' + (100 / config.steps.length) + '%;"></div>' +
+                '</div>' +
+              '</div>'
+            })() : '') +
+          '</div>' +
+        '</div>' +
+      '</div>'
+
+      placeholderMap.set(placeholder, componentHtml)
+      return placeholder
     } catch (e) {
       console.error('公式推导组件解析错误:', e)
-      return `<div class="component-error">公式推导组件配置错误: ${e.message}</div>`
-    }
-  })
-
-  // 处理图形推理组件
-  html = html.replace(/::: graphic-reasoning (.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
-    try {
-      const config = JSON.parse(content)
-      return `
-        <div class="custom-component graphic-reasoning" data-component="graphic-reasoning">
-          <div class="component-header">
-            <h4>🧩 ${title}</h4>
-          </div>
-          <div class="component-content">
-            <div class="reasoning-question">
-              <p>${config.question?.description || '图形推理题目'}</p>
-            </div>
-            <div class="reasoning-options">
-              ${config.options ? config.options.map((option, index) => `
-                <div class="option-item" data-index="${index}">
-                  选项 ${String.fromCharCode(65 + index)}
-                </div>
-              `).join('') : ''}
-            </div>
-          </div>
-        </div>
-      `
-    } catch (e) {
-      return `<div class="component-error">图形推理组件配置错误</div>`
-    }
-  })
-
-  // 处理3D可视化组件
-  html = html.replace(/::: 3d-visualization (.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
-    try {
-      const config = JSON.parse(content)
-      return `
-        <div class="custom-component 3d-visualization" data-component="3d-visualization">
-          <div class="component-header">
-            <h4>📦 ${title}</h4>
-          </div>
-          <div class="component-content">
-            <div class="visualization-container" style="width: ${config.width || 400}px; height: ${config.height || 300}px;">
-              <div class="visualization-placeholder">
-                <p>3D可视化组件</p>
-                <small>类型: ${config.type || 'geometry'}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      `
-    } catch (e) {
-      return `<div class="component-error">3D可视化组件配置错误</div>`
+      return '<div class="component-error">公式推导组件配置错误: ' + e.message + '</div>'
     }
   })
 
   // 处理交互图表组件
-  html = html.replace(/::: interactive-chart (.*?)\n([\s\S]*?)\n:::/gim, (match, title, content) => {
+  content = content.replace(/::: interactive-chart ([^\n]*)\n([\s\S]*?)\n:::/gim, (match, title, jsonContent) => {
     try {
-      const config = JSON.parse(content)
-      return `
-        <div class="custom-component interactive-chart" data-component="interactive-chart">
-          <div class="component-header">
-            <h4>📊 ${title}</h4>
-          </div>
-          <div class="component-content">
-            <div class="chart-container">
-              <div class="chart-placeholder">
-                <p>交互图表组件</p>
-                <small>类型: ${config.type || 'bar'}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      `
+      const config = JSON.parse(jsonContent.trim())
+      const placeholder = `COMPONENT_PLACEHOLDER_${placeholderIndex++}`
+
+      const componentHtml = '<div class="custom-component interactive-chart" data-component="interactive-chart">' +
+        '<div class="component-header">' +
+          '<h4>📊 ' + (config.title || title) + '</h4>' +
+        '</div>' +
+        '<div class="component-content">' +
+          '<div class="chart-container">' +
+            '<div class="chart-placeholder" style="height: 300px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">' +
+              '<div style="text-align: center; color: #6c757d;">' +
+                '<div style="font-size: 48px; margin-bottom: 10px;">📊</div>' +
+                '<div style="font-size: 16px; font-weight: 500;">交互图表组件</div>' +
+                '<div style="font-size: 14px; margin-top: 5px;">类型: ' + (config.type || 'bar') + '</div>' +
+                '<div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">数据点: ' + (config.data ? config.data.length : 0) + ' 个</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+
+      placeholderMap.set(placeholder, componentHtml)
+      return placeholder
     } catch (e) {
-      return `<div class="component-error">交互图表组件配置错误</div>`
+      console.error('交互图表组件解析错误:', e)
+      return '<div class="component-error">交互图表组件配置错误: ' + e.message + '</div>'
     }
   })
 
-  // 处理VitePress容器语法
-  html = processVitePressContainers(html)
+  // 处理图形推理组件
+  content = content.replace(/::: graphic-reasoning ([^\n]*)\n([\s\S]*?)\n:::/gim, (match, title, jsonContent) => {
+    try {
+      const config = JSON.parse(jsonContent.trim())
+      const placeholder = `COMPONENT_PLACEHOLDER_${placeholderIndex++}`
 
-  return html
+      const componentHtml = '<div class="custom-component graphic-reasoning" data-component="graphic-reasoning">' +
+        '<div class="component-header">' +
+          '<h4>🧩 ' + (config.title || title) + '</h4>' +
+        '</div>' +
+        '<div class="component-content">' +
+          '<div class="reasoning-question">' +
+            '<p>' + (config.question?.description || '图形推理题目') + '</p>' +
+          '</div>' +
+          '<div class="reasoning-options" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">' +
+            (config.options ? config.options.map((option, index) =>
+              '<div class="option-item" data-index="' + index + '" style="padding: 15px; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s;">' +
+                '<div style="font-weight: bold; margin-bottom: 10px;">选项 ' + String.fromCharCode(65 + index) + '</div>' +
+                '<div style="height: 80px; background: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d;">' +
+                  '图形 ' + (index + 1) +
+                '</div>' +
+              '</div>'
+            ).join('') : '') +
+          '</div>' +
+        '</div>' +
+      '</div>'
+
+      placeholderMap.set(placeholder, componentHtml)
+      return placeholder
+    } catch (e) {
+      console.error('图形推理组件解析错误:', e)
+      return '<div class="component-error">图形推理组件配置错误: ' + e.message + '</div>'
+    }
+  })
+
+  // 处理3D可视化组件
+  content = content.replace(/::: 3d-visualization ([^\n]*)\n([\s\S]*?)\n:::/gim, (match, title, jsonContent) => {
+    try {
+      const config = JSON.parse(jsonContent.trim())
+      const placeholder = `COMPONENT_PLACEHOLDER_${placeholderIndex++}`
+
+      const componentHtml = '<div class="custom-component visualization-3d" data-component="3d-visualization">' +
+        '<div class="component-header">' +
+          '<h4>📦 ' + (config.title || title) + '</h4>' +
+        '</div>' +
+        '<div class="component-content">' +
+          '<div class="visualization-container" style="width: ' + (config.width || 400) + 'px; height: ' + (config.height || 300) + 'px; margin: 0 auto; background: #000; border-radius: 8px; position: relative; overflow: hidden;">' +
+            '<div class="visualization-placeholder" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #fff;">' +
+              '<div style="font-size: 48px; margin-bottom: 10px;">📦</div>' +
+              '<div style="font-size: 16px; font-weight: 500;">3D可视化组件</div>' +
+              '<div style="font-size: 14px; margin-top: 5px; opacity: 0.8;">类型: ' + (config.type || 'geometry') + '</div>' +
+              '<div style="font-size: 12px; margin-top: 5px; opacity: 0.6;">尺寸: ' + (config.width || 400) + ' × ' + (config.height || 300) + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+
+      placeholderMap.set(placeholder, componentHtml)
+      return placeholder
+    } catch (e) {
+      console.error('3D可视化组件解析错误:', e)
+      return '<div class="component-error">3D可视化组件配置错误: ' + e.message + '</div>'
+    }
+  })
+
+  return content
 }
+
+
+
 
 const processVitePressContainers = (html) => {
   // 处理 tip 容器
@@ -1464,6 +1595,404 @@ defineExpose({
       padding: 40px;
     }
   }
+}
+
+/* 公式推导组件样式 - 与前台VitePress保持一致 */
+.formula-derivation-container {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.derivation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #409eff;
+}
+
+.derivation-title {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.5em;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.control-btn {
+  padding: 8px 16px;
+  border: 1px solid #409eff;
+  border-radius: 4px;
+  background: white;
+  color: #409eff;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.control-btn:hover {
+  background: #409eff;
+  color: white;
+}
+
+.control-btn.active {
+  background: #409eff;
+  color: white;
+}
+
+.derivation-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.step-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.progress-info {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.progress-bar {
+  width: 200px;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #67c23a);
+  transition: width 0.3s ease;
+}
+
+.derivation-content {
+  margin-top: 20px;
+}
+
+.steps-container {
+  position: relative;
+}
+
+.derivation-step {
+  margin-bottom: 30px;
+  padding: 20px;
+  border-radius: 8px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  transition: all 0.5s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.derivation-step.visible {
+  opacity: 1;
+  transform: translateY(0);
+  border-color: #409eff;
+}
+
+.derivation-step.current {
+  border-color: #67c23a;
+  box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+}
+
+.derivation-step.completed {
+  opacity: 0.7;
+  border-color: #909399;
+}
+
+/* 步骤导航样式 - 模拟前台VitePress */
+.step-navigation {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.nav-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  border: 1px solid #409eff;
+  border-radius: 4px;
+  background: white;
+  color: #409eff;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #409eff;
+  color: white;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ddd;
+  color: #999;
+}
+
+.step-info {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.progress-bar-nav {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill-nav {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #67c23a);
+  transition: width 0.3s ease;
+}
+
+/* 步骤头部样式 */
+.step-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+}
+
+.step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #67c23a;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.step-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #67c23a;
+  box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.2);
+}
+
+.step-description {
+  font-size: 16px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.step-formula {
+  text-align: center;
+  padding: 20px;
+}
+
+.formula-content {
+  font-size: 1.2em;
+  margin-bottom: 15px;
+}
+
+.step-explanation {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+}
+
+.step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #409eff;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.step-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e9ecef;
+  margin-left: 10px;
+}
+
+.step-indicator.active {
+  background: #409eff;
+}
+
+.step-description {
+  flex: 1;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.step-formula {
+  margin-top: 10px;
+}
+
+.formula-content {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  text-align: center;
+  border-left: 4px solid #409eff;
+}
+
+.step-explanation {
+  margin-top: 10px;
+  padding: 10px;
+  background: #e3f2fd;
+  border-radius: 4px;
+  color: #1976d2;
+  font-style: italic;
+}
+
+.step-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.connector-line {
+  width: 2px;
+  height: 20px;
+  background: #e9ecef;
+  transition: background 0.3s;
+}
+
+.connector-line.active {
+  background: #409eff;
+}
+
+.connector-arrow {
+  color: #409eff;
+  font-size: 18px;
+  margin-top: 5px;
+}
+
+/* 组件错误样式 */
+.component-error {
+  padding: 15px;
+  background: #ffebee;
+  border: 1px solid #f44336;
+  border-radius: 4px;
+  color: #c62828;
+  margin: 10px 0;
+}
+
+/* 通用组件样式 */
+.custom-component {
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.component-header {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin: 0;
+}
+
+.component-header h4 {
+  margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.component-content {
+  padding: 20px;
+  background: white;
+}
+
+/* 交互图表组件特定样式 */
+.interactive-chart .chart-container {
+  margin-top: 15px;
+}
+
+/* 图形推理组件特定样式 */
+.graphic-reasoning .reasoning-question {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
+}
+
+.graphic-reasoning .option-item:hover {
+  border-color: #667eea !important;
+  background: #f8f9ff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+/* 3D可视化组件特定样式 */
+.visualization-3d .visualization-container {
+  border: 2px solid #333;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* 公式渲染失败时的样式 */
+.formula-fallback {
+  font-family: 'Courier New', monospace;
+  background: #fff3cd;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #ffeaa7;
+  color: #856404;
 }
 </style>
 

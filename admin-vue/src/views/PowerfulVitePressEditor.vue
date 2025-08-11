@@ -721,7 +721,68 @@ const handleTocChange = (activeId) => {
 
 const handleComponentClick = ({ type, element, event }) => {
   // 处理自定义组件点击
-  ElMessage.info(`点击了 ${type} 组件`)
+  try {
+    // 从DOM元素中提取组件信息
+    const componentHeader = element.querySelector('.component-header h4')
+    const title = componentHeader ? componentHeader.textContent.replace(/^[📐📊🧩📦⚡❓]\s*/, '') : '未知组件'
+
+    // 在文档内容中查找对应的组件
+    const content = documentContent.value
+    const lines = content.split('\n')
+
+    // 查找组件在文档中的位置
+    let componentLine = -1
+    let componentText = ''
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      if (line.includes(`:::`) && line.includes(type) && line.includes(title)) {
+        componentLine = i + 1
+
+        // 提取完整的组件文本（从::: 到 :::）
+        let endLine = i
+        for (let j = i + 1; j < lines.length; j++) {
+          if (lines[j].trim() === ':::') {
+            endLine = j
+            break
+          }
+        }
+
+        componentText = lines.slice(i, endLine + 1).join('\n')
+        break
+      }
+    }
+
+    if (componentLine > 0 && componentText) {
+      selectedComponentInfo.value = {
+        type,
+        title,
+        text: componentText,
+        line: componentLine,
+        element
+      }
+
+      // 高亮显示选中的组件
+      element.style.outline = '2px solid #409eff'
+      element.style.outlineOffset = '2px'
+
+      // 清除其他组件的高亮
+      const allComponents = document.querySelectorAll('.custom-component')
+      allComponents.forEach(comp => {
+        if (comp !== element) {
+          comp.style.outline = ''
+          comp.style.outlineOffset = ''
+        }
+      })
+
+      ElMessage.success(`已选择 ${title} 组件`)
+    } else {
+      ElMessage.warning('无法定位组件在文档中的位置')
+    }
+  } catch (error) {
+    console.error('处理组件点击失败:', error)
+    ElMessage.error('选择组件失败')
+  }
 }
 
 // 高级功能处理方法
@@ -1096,19 +1157,76 @@ const parseComponentFromMarkdown = (componentInfo) => {
   // 这里实现从Markdown文本解析组件数据的逻辑
   const { text, line } = componentInfo
 
-  // 简单的解析逻辑，实际应该更复杂
-  const match = text.match(/::: (\w+) (.+)/)
-  if (match) {
-    return {
-      type: match[1],
-      title: match[2],
-      config: {},
-      originalMarkdown: text,
-      line: line
+  // 解析组件标题和类型
+  const headerMatch = text.match(/::: (\w+) (.+)/)
+  if (!headerMatch) return null
+
+  const type = headerMatch[1]
+  const title = headerMatch[2]
+
+  // 解析JSON配置
+  let config = {}
+  try {
+    // 提取JSON部分（在::: 和 :::之间）
+    const jsonMatch = text.match(/::: \w+ .+\n([\s\S]*?)\n:::/m)
+    if (jsonMatch && jsonMatch[1]) {
+      const jsonContent = jsonMatch[1].trim()
+      if (jsonContent.startsWith('{') && jsonContent.endsWith('}')) {
+        config = JSON.parse(jsonContent)
+      }
     }
+  } catch (error) {
+    console.warn('解析组件JSON配置失败:', error)
+    // 提供默认配置
+    config = getDefaultConfig(type)
   }
 
-  return null
+  return {
+    type,
+    title,
+    config,
+    originalMarkdown: text,
+    line: line
+  }
+}
+
+// 获取默认配置
+const getDefaultConfig = (type) => {
+  switch (type) {
+    case 'formula-derivation':
+      return {
+        title: "公式推导",
+        steps: [
+          { formula: "x = 1", description: "示例公式" }
+        ]
+      }
+    case 'interactive-chart':
+      return {
+        title: "示例图表",
+        type: "bar",
+        data: {
+          categories: ["A", "B", "C"],
+          series: [10, 20, 30]
+        }
+      }
+    case 'graphic-reasoning':
+      return {
+        title: "图形推理",
+        type: "pattern",
+        question: { description: "题目描述" },
+        options: [],
+        answer: 0
+      }
+    case '3d-visualization':
+      return {
+        title: "3D可视化",
+        type: "geometry",
+        width: 400,
+        height: 300
+      }
+    default:
+      return {}
+  }
 }
 
 // refreshPreview 已在上面定义，删除重复声明

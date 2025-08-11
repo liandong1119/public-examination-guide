@@ -104,11 +104,53 @@
       </div>
     </template>
   </el-dialog>
+
+  <!-- 预览对话框 -->
+  <el-dialog
+    v-model="previewVisible"
+    title="🔍 组件预览"
+    width="900px"
+    class="component-preview-dialog">
+
+    <div v-if="previewComponentData" class="preview-content">
+      <div class="preview-header">
+        <h3>{{ previewComponentData.name }}</h3>
+        <p>{{ previewComponentData.description }}</p>
+      </div>
+
+      <div class="preview-demo">
+        <h4>示例效果：</h4>
+        <div class="demo-container">
+          <!-- 根据组件类型渲染不同的预览 -->
+          <component
+            v-if="previewComponentData.id === 'formula-derivation'"
+            :is="FormulaDerivation"
+            :config="previewComponentData.defaultConfig" />
+
+          <component
+            v-else-if="previewComponentData.id === 'interactive-chart'"
+            :is="InteractiveChart"
+            :config="previewComponentData.defaultConfig" />
+
+          <div v-else class="no-preview">
+            暂无预览
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-code">
+        <h4>代码示例：</h4>
+        <pre><code>{{ previewComponentData.example }}</code></pre>
+      </div>
+    </div>
+  </el-dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import FormulaDerivation from './FormulaDerivation.vue'
+import InteractiveChart from './InteractiveChart.vue'
 
 // Props & Emits
 const props = defineProps({
@@ -125,6 +167,8 @@ const visible = ref(false)
 const activeCategory = ref('formula')
 const selectedComponent = ref(null)
 const componentConfig = ref({})
+const previewVisible = ref(false)
+const previewComponentData = ref(null)
 
 // 组件分类
 const categories = ref([
@@ -144,6 +188,38 @@ const components = ref([
     description: '展示数学公式的逐步推导过程',
     preview: '::: formula-derivation 标题\n推导步骤\n:::',
     template: '',
+    defaultConfig: {
+      title: "一元二次方程求根公式推导",
+      steps: [
+        {
+          formula: "ax^2 + bx + c = 0",
+          description: "标准一元二次方程形式，其中 a ≠ 0"
+        },
+        {
+          formula: "x^2 + \\frac{b}{a}x + \\frac{c}{a} = 0",
+          description: "两边同时除以 a，化为首项系数为1的形式"
+        },
+        {
+          formula: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
+          description: "最终得到一元二次方程的求根公式"
+        }
+      ]
+    },
+    example: `::: formula-derivation 一元二次方程求根公式推导
+{
+  "title": "一元二次方程求根公式推导",
+  "steps": [
+    {
+      "formula": "ax^2 + bx + c = 0",
+      "description": "标准一元二次方程形式，其中 a ≠ 0"
+    },
+    {
+      "formula": "x = \\\\frac{-b \\\\pm \\\\sqrt{b^2 - 4ac}}{2a}",
+      "description": "最终得到一元二次方程的求根公式"
+    }
+  ]
+}
+:::`,
     configFields: [
       { key: 'title', label: '标题', type: 'text', placeholder: '输入公式推导标题' },
       { key: 'description', label: '描述', type: 'textarea', placeholder: '输入推导说明' }
@@ -193,6 +269,26 @@ const components = ref([
     description: '创建可交互的数据图表',
     preview: '::: interactive-chart 标题\n图表数据\n:::',
     template: '',
+    defaultConfig: {
+      title: "学生成绩分析",
+      type: "bar",
+      showLegend: true,
+      data: {
+        categories: ["语文", "数学", "英语", "物理", "化学"],
+        series: [85, 92, 78, 88, 90]
+      }
+    },
+    example: `::: interactive-chart 学生成绩分析
+{
+  "title": "学生成绩分析",
+  "type": "bar",
+  "showLegend": true,
+  "data": {
+    "categories": ["语文", "数学", "英语", "物理", "化学"],
+    "series": [85, 92, 78, 88, 90]
+  }
+}
+:::`,
     configFields: [
       { key: 'title', label: '标题', type: 'text', placeholder: '输入图表标题' },
       { key: 'type', label: '图表类型', type: 'select', options: [
@@ -260,8 +356,8 @@ const selectComponent = (component) => {
 }
 
 const previewComponent = (component) => {
-  ElMessage.info(`预览 ${component.name} 组件`)
-  // 这里可以添加预览逻辑
+  previewComponentData.value = component
+  previewVisible.value = true
 }
 
 const generateTemplate = () => {
@@ -540,6 +636,80 @@ watch(visible, (val) => {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+  }
+}
+
+/* 预览对话框样式 */
+.component-preview-dialog {
+  .preview-content {
+    .preview-header {
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+
+      h3 {
+        margin: 0 0 8px 0;
+        color: #333;
+        font-size: 18px;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+      }
+    }
+
+    .preview-demo {
+      margin-bottom: 25px;
+
+      h4 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 16px;
+      }
+
+      .demo-container {
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fafafa;
+        min-height: 200px;
+
+        .no-preview {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 160px;
+          color: #999;
+          font-size: 14px;
+        }
+      }
+    }
+
+    .preview-code {
+      h4 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 16px;
+      }
+
+      pre {
+        background: #f5f5f5;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 0;
+        overflow-x: auto;
+
+        code {
+          font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+          font-size: 13px;
+          line-height: 1.5;
+          color: #333;
+        }
+      }
+    }
   }
 }
 </style>

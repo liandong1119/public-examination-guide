@@ -21,20 +21,22 @@ export class ComponentBindingManager {
    * @param {string} componentType - 组件类型
    * @param {string} componentTitle - 组件标题
    * @param {number} position - 在文档中的位置
+   * @param {Object} config - 组件配置
    */
-  createBinding(documentPath, componentId, componentType, componentTitle, position) {
+  createBinding(documentPath, componentId, componentType, componentTitle, position, config = {}) {
     const bindingKey = `${documentPath}:${componentId}`
-    
+
     const binding = {
       documentPath,
       componentId,
       componentType,
       componentTitle,
       position,
+      config,
       lastSync: new Date().toISOString(),
       isDirty: false // 是否有未同步的更改
     }
-    
+
     this.bindings.set(bindingKey, binding)
     return binding
   }
@@ -62,36 +64,43 @@ export class ComponentBindingManager {
    */
   parseComponentsFromMarkdown(documentPath, content) {
     const components = []
-    const lines = content.split('\n')
-    
-    // 正则表达式匹配组件标签
-    const componentRegex = /::: (formula-derivation|graphic-reasoning|3d-visualization) (.*?)/g
-    
+
+    // 更新正则表达式以支持更多组件类型
+    const componentRegex = /::: (formula-derivation|graphic-reasoning|3d-visualization|interactive-chart) (.*?)\n([\s\S]*?)\n:::/gim
+
     let match
-    let lineNumber = 0
-    
-    for (const line of lines) {
-      lineNumber++
-      componentRegex.lastIndex = 0 // 重置正则表达式
-      match = componentRegex.exec(line)
-      
-      if (match) {
-        const [, componentType, componentTitle] = match
-        const componentId = this.generateComponentId(componentType, componentTitle)
-        
-        components.push({
-          id: componentId,
-          type: componentType,
-          title: componentTitle.trim(),
-          position: lineNumber,
-          documentPath
-        })
-        
-        // 创建或更新绑定
-        this.createBinding(documentPath, componentId, componentType, componentTitle.trim(), lineNumber)
+    while ((match = componentRegex.exec(content)) !== null) {
+      const [fullMatch, componentType, componentTitle, jsonContent] = match
+      const componentId = this.generateComponentId(componentType, componentTitle)
+
+      // 计算组件在文档中的行号
+      const beforeMatch = content.substring(0, match.index)
+      const lineNumber = beforeMatch.split('\n').length
+
+      // 解析JSON配置
+      let config = {}
+      try {
+        if (jsonContent.trim().startsWith('{') && jsonContent.trim().endsWith('}')) {
+          config = JSON.parse(jsonContent.trim())
+        }
+      } catch (error) {
+        console.warn('解析组件JSON配置失败:', error)
       }
+
+      components.push({
+        id: componentId,
+        type: componentType,
+        title: componentTitle.trim(),
+        position: lineNumber,
+        documentPath,
+        config,
+        fullMarkdown: fullMatch
+      })
+
+      // 创建或更新绑定
+      this.createBinding(documentPath, componentId, componentType, componentTitle.trim(), lineNumber, config)
     }
-    
+
     return components
   }
 

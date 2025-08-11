@@ -7,7 +7,39 @@
 下面是一个二次公式推导的演示：
 
 ::: formula-derivation 二次公式推导
-{"title": "一元二次方程求根公式推导", "steps": [{"formula": "ax^2 + bx + c = 0", "description": "标准一元二次方程形式，其中 a ≠ 0"}, {"formula": "x^2 + \\frac{b}{a}x + \\frac{c}{a} = 0", "description": "两边同时除以 a，化为首项系数为1的形式"}, {"formula": "x^2 + \\frac{b}{a}x = -\\frac{c}{a}", "description": "移项，将常数项移到等号右边"}, {"formula": "x^2 + \\frac{b}{a}x + \\left(\\frac{b}{2a}\\right)^2 = -\\frac{c}{a} + \\left(\\frac{b}{2a}\\right)^2", "description": "配方，两边同时加上一次项系数一半的平方"}, {"formula": "\\left(x + \\frac{b}{2a}\\right)^2 = \\frac{b^2 - 4ac}{4a^2}", "description": "左边配成完全平方式，右边通分化简"}, {"formula": "x + \\frac{b}{2a} = \\pm\\frac{\\sqrt{b^2 - 4ac}}{2a}", "description": "开平方根，注意正负两种情况"}, {"formula": "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}", "description": "最终得到一元二次方程的求根公式"}]}
+{
+  "title": "一元二次方程求根公式推导",
+  "steps": [
+    {
+      "formula": "ax^2 + bx + c = 0",
+      "description": "标准一元二次方程形式，其中 a ≠ 0"
+    },
+    {
+      "formula": "x^2 + \\frac{b}{a}x + \\frac{c}{a} = 0",
+      "description": "两边同时除以 a，化为首项系数为1的形式"
+    },
+    {
+      "formula": "x^2 + \\frac{b}{a}x = -\\frac{c}{a}",
+      "description": "移项，将常数项移到等号右边"
+    },
+    {
+      "formula": "x^2 + \\frac{b}{a}x + \\left(\\frac{b}{2a}\\right)^2 = -\\frac{c}{a} + \\left(\\frac{b}{2a}\\right)^2",
+      "description": "配方，两边同时加上一次项系数一半的平方"
+    },
+    {
+      "formula": "\\left(x + \\frac{b}{2a}\\right)^2 = \\frac{b^2 - 4ac}{4a^2}",
+      "description": "左边配成完全平方式，右边通分化简"
+    },
+    {
+      "formula": "x + \\frac{b}{2a} = \\pm\\frac{\\sqrt{b^2 - 4ac}}{2a}",
+      "description": "开平方根，注意正负两种情况"
+    },
+    {
+      "formula": "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
+      "description": "最终得到一元二次方程的求根公式"
+    }
+  ]
+}
 :::
 
 ## 📊 交互式图表组件
@@ -15,7 +47,15 @@
 下面是一个学生成绩分析图表：
 
 ::: interactive-chart 学生成绩分析
-{"title": "各科目平均成绩对比", "type": "bar", "showLegend": true, "data": {"categories": ["语文", "数学", "英语", "物理", "化学"], "series": [85, 92, 78, 88, 90]}}
+{
+  "title": "各科目平均成绩对比",
+  "type": "bar",
+  "showLegend": true,
+  "data": {
+    "categories": ["语文", "数学", "英语", "物理", "化学"],
+    "series": [85, 92, 78, 88, 90]
+  }
+}
 :::
 
 ## 🎯 多系列数据图表

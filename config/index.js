@@ -12,7 +12,7 @@ const isTest = process.env.NODE_ENV === 'test';
 // 服务器配置
 export const SERVER_CONFIG = {
   // API服务器
-  API_PORT: parseInt(process.env.API_PORT) || 3001,
+  API_PORT: parseInt(process.env.API_PORT) || 8080,
   API_HOST: process.env.API_HOST || 'localhost',
   
   // VitePress开发服务器
